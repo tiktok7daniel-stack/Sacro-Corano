@@ -24,18 +24,16 @@ class Reflection {
   final List<String> tags;
   final DateTime created;
 
-  Reflection copyWith({String? text, List<String>? tags}) =>
-      Reflection(id: id, ref: ref, text: text ?? this.text, tags: tags ?? this.tags, created: created);
+  Reflection copyWith({String? text, List<String>? tags}) => Reflection(id: id, ref: ref, text: text ?? this.text, tags: tags ?? this.tags, created: created);
 
-  Map<String, dynamic> toJson() =>
-      {'id': id, 'r': ref.key, 'x': text, 'g': tags, 't': created.toIso8601String()};
+  Map<String, dynamic> toJson() => {'id': id, 'r': ref.key, 'x': text, 'g': tags, 't': created.toIso8601String()};
   factory Reflection.fromJson(Map<String, dynamic> j) => Reflection(
-        id: j['id'] as String,
-        ref: AyahRef.parse(j['r'] as String),
-        text: j['x'] as String,
-        tags: ((j['g'] as List?) ?? []).cast<String>(),
-        created: DateTime.parse(j['t'] as String),
-      );
+    id: j['id'] as String,
+    ref: AyahRef.parse(j['r'] as String),
+    text: j['x'] as String,
+    tags: ((j['g'] as List?) ?? []).cast<String>(),
+    created: DateTime.parse(j['t'] as String),
+  );
 }
 
 /// Tasbih presets. Texts are the well-known short adhkar from the Sunnah.
@@ -77,22 +75,64 @@ class DayActivity {
 
   bool get active => ayahsRead > 0 || tasbih > 0 || prayers.isNotEmpty || azkar.isNotEmpty;
 
-  DayActivity copyWith({int? ayahsRead, int? secondsRead, int? tasbih, Set<String>? prayers, Set<String>? azkar}) =>
-      DayActivity(
-        ayahsRead: ayahsRead ?? this.ayahsRead,
-        secondsRead: secondsRead ?? this.secondsRead,
-        tasbih: tasbih ?? this.tasbih,
-        prayers: prayers ?? this.prayers,
-        azkar: azkar ?? this.azkar,
-      );
+  DayActivity copyWith({int? ayahsRead, int? secondsRead, int? tasbih, Set<String>? prayers, Set<String>? azkar}) => DayActivity(
+    ayahsRead: ayahsRead ?? this.ayahsRead,
+    secondsRead: secondsRead ?? this.secondsRead,
+    tasbih: tasbih ?? this.tasbih,
+    prayers: prayers ?? this.prayers,
+    azkar: azkar ?? this.azkar,
+  );
 
-  Map<String, dynamic> toJson() =>
-      {'a': ayahsRead, 's': secondsRead, 't': tasbih, 'p': prayers.toList(), 'z': azkar.toList()};
+  Map<String, dynamic> toJson() => {'a': ayahsRead, 's': secondsRead, 't': tasbih, 'p': prayers.toList(), 'z': azkar.toList()};
   factory DayActivity.fromJson(Map<String, dynamic> j) => DayActivity(
-        ayahsRead: j['a'] as int? ?? 0,
-        secondsRead: j['s'] as int? ?? 0,
-        tasbih: j['t'] as int? ?? 0,
-        prayers: ((j['p'] as List?) ?? []).cast<String>().toSet(),
-        azkar: ((j['z'] as List?) ?? []).cast<String>().toSet(),
-      );
+    ayahsRead: j['a'] as int? ?? 0,
+    secondsRead: j['s'] as int? ?? 0,
+    tasbih: j['t'] as int? ?? 0,
+    prayers: ((j['p'] as List?) ?? []).cast<String>().toSet(),
+    azkar: ((j['z'] as List?) ?? []).cast<String>().toSet(),
+  );
+}
+
+/// A saved hadith or dhikr (verses use [Bookmark]).
+@immutable
+class FavoriteItem {
+  const FavoriteItem({required this.type, required this.id, required this.text, required this.source, required this.created});
+
+  /// 'hadith' or 'zikr'.
+  final String type;
+  final String id;
+  final String text;
+  final String source;
+  final DateTime created;
+
+  Map<String, dynamic> toJson() => {'y': type, 'id': id, 'x': text, 's': source, 't': created.toIso8601String()};
+  factory FavoriteItem.fromJson(Map<String, dynamic> j) => FavoriteItem(
+    type: j['y'] as String,
+    id: j['id'] as String,
+    text: j['x'] as String,
+    source: j['s'] as String? ?? '',
+    created: DateTime.parse(j['t'] as String),
+  );
+}
+
+/// A good deed dedicated to someone (sadaqa jariya log).
+@immutable
+class Dedication {
+  const Dedication({required this.id, required this.name, required this.deed, required this.created, this.note = ''});
+  final String id;
+  final String name;
+
+  /// 'khatma', 'surah', 'tasbih', 'dua', 'other'.
+  final String deed;
+  final String note;
+  final DateTime created;
+
+  Map<String, dynamic> toJson() => {'id': id, 'n': name, 'd': deed, 'x': note, 't': created.toIso8601String()};
+  factory Dedication.fromJson(Map<String, dynamic> j) => Dedication(
+    id: j['id'] as String,
+    name: j['n'] as String,
+    deed: j['d'] as String,
+    note: j['x'] as String? ?? '',
+    created: DateTime.parse(j['t'] as String),
+  );
 }

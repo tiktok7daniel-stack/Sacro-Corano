@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/azkar_repository.dart';
+import '../data/hadith_repository.dart';
 import '../data/local/storage.dart';
 import '../data/quran/content_repository.dart';
 import '../data/quran/quran_data.dart';
@@ -29,9 +30,7 @@ final contentRepoProvider = Provider<ContentRepository>((ref) => ContentReposito
 
 final azkarProvider = FutureProvider<AzkarData>((ref) => AzkarData.load());
 
-final translationProvider = FutureProvider.family<Translation, String>(
-  (ref, id) => ref.watch(contentRepoProvider).translation(id),
-);
+final translationProvider = FutureProvider.family<Translation, String>((ref, id) => ref.watch(contentRepoProvider).translation(id));
 
 final searchEngineProvider = FutureProvider<SearchEngine>((ref) async {
   final q = await ref.watch(quranProvider.future);
@@ -40,12 +39,7 @@ final searchEngineProvider = FutureProvider<SearchEngine>((ref) async {
     for (final s in q.surahs)
       for (var a = 1; a <= s.ayahCount; a++) AyahRef(s.number, a),
   ];
-  return SearchEngine(
-    refs: refs,
-    arabicIndex: index,
-    isMeccan: (n) => q.surah(n).meccan,
-    juzOf: (r) => q.juzOf(r.surah, r.ayah),
-  );
+  return SearchEngine(refs: refs, arabicIndex: index, isMeccan: (n) => q.surah(n).meccan, juzOf: (r) => q.juzOf(r.surah, r.ayah));
 });
 
 /// Ticks every second; used by countdowns.
@@ -90,8 +84,7 @@ abstract class _ListStore<T> extends Notifier<List<T>> {
   Map<String, dynamic> encode(T v);
 
   @override
-  List<T> build() =>
-      ref.read(storageProvider).readList(key).map((e) => decode(Map<String, dynamic>.from(e as Map))).toList();
+  List<T> build() => ref.read(storageProvider).readList(key).map((e) => decode(Map<String, dynamic>.from(e as Map))).toList();
 
   @protected
   void save(List<T> next) {
@@ -118,9 +111,7 @@ class BookmarksController extends _ListStore<Bookmark> {
     }
   }
 
-  void move(AyahRef r, String collection) => save([
-        for (final b in state) b.ref == r ? Bookmark(ref: r, collection: collection, created: b.created) : b,
-      ]);
+  void move(AyahRef r, String collection) => save([for (final b in state) b.ref == r ? Bookmark(ref: r, collection: collection, created: b.created) : b]);
 
   List<String> get collections => {'default', ...state.map((b) => b.collection)}.toList();
 }
@@ -136,18 +127,11 @@ class ReflectionsController extends _ListStore<Reflection> {
   Map<String, dynamic> encode(Reflection v) => v.toJson();
 
   void add(AyahRef r, String text, List<String> tags) => save([
-        Reflection(
-          id: '${DateTime.now().microsecondsSinceEpoch}${Random().nextInt(999)}',
-          ref: r,
-          text: text,
-          tags: tags,
-          created: DateTime.now(),
-        ),
-        ...state,
-      ]);
+    Reflection(id: '${DateTime.now().microsecondsSinceEpoch}${Random().nextInt(999)}', ref: r, text: text, tags: tags, created: DateTime.now()),
+    ...state,
+  ]);
 
-  void edit(String id, String text, List<String> tags) =>
-      save([for (final x in state) x.id == id ? x.copyWith(text: text, tags: tags) : x]);
+  void edit(String id, String text, List<String> tags) => save([for (final x in state) x.id == id ? x.copyWith(text: text, tags: tags) : x]);
 
   void remove(String id) => save(state.where((x) => x.id != id).toList());
 
@@ -176,10 +160,8 @@ final lastReadProvider = NotifierProvider<LastReadController, AyahRef?>(LastRead
 /// Per-day activity log powering statistics, streaks and achievements.
 class ActivityController extends Notifier<Map<String, DayActivity>> {
   @override
-  Map<String, DayActivity> build() => ref
-      .read(storageProvider)
-      .readMap('activity')
-      .map((k, v) => MapEntry(k, DayActivity.fromJson(Map<String, dynamic>.from(v as Map))));
+  Map<String, DayActivity> build() =>
+      ref.read(storageProvider).readMap('activity').map((k, v) => MapEntry(k, DayActivity.fromJson(Map<String, dynamic>.from(v as Map))));
 
   final Set<String> _seenToday = {};
 
@@ -203,10 +185,10 @@ class ActivityController extends Notifier<Map<String, DayActivity>> {
   void addTasbih(int n) => _mutate((d) => d.copyWith(tasbih: d.tasbih + n));
 
   void togglePrayer(String prayer, [DateTime? day]) => _mutate((d) {
-        final p = Set<String>.from(d.prayers);
-        p.contains(prayer) ? p.remove(prayer) : p.add(prayer);
-        return d.copyWith(prayers: p);
-      }, day);
+    final p = Set<String>.from(d.prayers);
+    p.contains(prayer) ? p.remove(prayer) : p.add(prayer);
+    return d.copyWith(prayers: p);
+  }, day);
 
   void completeAzkar(String category) => _mutate((d) => d.copyWith(azkar: {...d.azkar, category}));
 }
@@ -266,16 +248,14 @@ class HifzController extends _ListStore<HifzCard> {
     save([...state, ...added]);
   }
 
-  void review(String id, int grade, int mistakes) => save([
-        for (final c in state) c.id == id ? reviewCard(c, grade, now: DateTime.now(), mistakes: mistakes) : c,
-      ]);
+  void review(String id, int grade, int mistakes) =>
+      save([for (final c in state) c.id == id ? reviewCard(c, grade, now: DateTime.now(), mistakes: mistakes) : c]);
 
   void removeSurah(int surah) => save(state.where((c) => c.surah != surah).toList());
 
   List<HifzCard> due() {
     final now = DateTime.now();
-    final list = state.where((c) => c.isDue(now)).toList()
-      ..sort((a, b) => a.due != b.due ? a.due.compareTo(b.due) : a.id.compareTo(b.id));
+    final list = state.where((c) => c.isDue(now)).toList()..sort((a, b) => a.due != b.due ? a.due.compareTo(b.due) : a.id.compareTo(b.id));
     return list;
   }
 }
@@ -349,8 +329,7 @@ final tasbihProvider = NotifierProvider<TasbihController, TasbihState>(TasbihCon
 /// Stars earned per surah in kids mode.
 class KidsController extends Notifier<Map<String, int>> {
   @override
-  Map<String, int> build() =>
-      ref.read(storageProvider).readMap('kids').map((k, v) => MapEntry(k, (v as num).toInt()));
+  Map<String, int> build() => ref.read(storageProvider).readMap('kids').map((k, v) => MapEntry(k, (v as num).toInt()));
 
   int get total => state.values.fold(0, (a, b) => a + b);
 
@@ -376,3 +355,42 @@ class CelebratedController extends Notifier<Set<String>> {
 }
 
 final celebratedProvider = NotifierProvider<CelebratedController, Set<String>>(CelebratedController.new);
+
+final hadithRepoProvider = Provider<HadithRepository>((ref) => HadithRepository());
+
+class FavoritesController extends _ListStore<FavoriteItem> {
+  @override
+  String get key => 'favorites';
+  @override
+  FavoriteItem decode(Map<String, dynamic> j) => FavoriteItem.fromJson(j);
+  @override
+  Map<String, dynamic> encode(FavoriteItem v) => v.toJson();
+
+  bool contains(String type, String id) => state.any((f) => f.type == type && f.id == id);
+
+  void toggle(String type, String id, String text, String source) {
+    if (contains(type, id)) {
+      save(state.where((f) => !(f.type == type && f.id == id)).toList());
+    } else {
+      save([FavoriteItem(type: type, id: id, text: text, source: source, created: DateTime.now()), ...state]);
+    }
+  }
+}
+
+final favoritesProvider = NotifierProvider<FavoritesController, List<FavoriteItem>>(FavoritesController.new);
+
+class DedicationsController extends _ListStore<Dedication> {
+  @override
+  String get key => 'dedications';
+  @override
+  Dedication decode(Map<String, dynamic> j) => Dedication.fromJson(j);
+  @override
+  Map<String, dynamic> encode(Dedication v) => v.toJson();
+
+  void add(String name, String deed, String note) =>
+      save([Dedication(id: '${DateTime.now().microsecondsSinceEpoch}', name: name, deed: deed, note: note, created: DateTime.now()), ...state]);
+
+  void remove(String id) => save(state.where((d) => d.id != id).toList());
+}
+
+final dedicationsProvider = NotifierProvider<DedicationsController, List<Dedication>>(DedicationsController.new);

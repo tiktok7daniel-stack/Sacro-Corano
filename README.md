@@ -64,6 +64,11 @@ that were considered and the brand guidelines.
 - **Hisn al-Muslim** with 130+ situations (morning, evening, sleep, after
   prayer, travel, distress, …): tap-to-count cards, auto-advance, progress
   bar, and completion tracking.
+- **Prayer adhkar** gathered in order (opening, rukuʿ, sujud, tashahhud, after
+  the salam), **Ruqyah** from the Quran and Sunnah, and favourite adhkar.
+- **Hadith**: the Forty Nawawi and the Forty Qudsi bundled (Arabic + English),
+  Sahih al-Bukhari and Sahih Muslim as optional downloads; search, copy, share
+  as an image, favourites, and a hadith of the day.
 - **Smart tasbih**: presets and custom adhkar, round targets, a daily goal,
   streaks, a 14-day history, bead and ripple animation, and haptics.
 
@@ -94,7 +99,19 @@ that were considered and the brand guidelines.
   celebration. Everything is computed on the device.
 - **“My day”** checklist: prayers, morning/evening adhkar, khatma portion,
   due hifz reviews, and tasbih goal.
-- Verse, dua and dhikr of the day; Ramadan countdown.
+- Verse, dua and dhikr of the day; “did you know?” tips; a weekly summary
+  (prayers out of 35, active days); countdowns to the next Hijri occasion.
+- **Prophetic Sira through the Quran**: four sections (who he is ﷺ, his life,
+  his battles, his household), each event told by its verses and Tafsir
+  al-Muyassar.
+- **Audio tafsir**: Tafsir al-Muyassar read aloud verse by verse by the
+  device's Arabic voice (offline when the voice is installed).
+- **Live Quran radio** (MP3Quran.net) and curated **videos** that open in
+  YouTube.
+- **Hijri calendar** with occasions, the white days and Monday/Thursday fasts;
+  a **month table** of prayer times.
+- **Sadaqa jariya**: log deeds dedicated to loved ones and share the app.
+- **Favourites** in one place: verses, hadiths and adhkar with filters.
 
 ### Platform
 - **Home-screen widget**: verse of the day and today's prayer times (native

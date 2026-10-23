@@ -23,6 +23,7 @@ class PlaybackState {
     this.rangeEnd,
     this.speed = 1.0,
     this.error,
+    this.stream,
   });
 
   final AyahRef? current;
@@ -38,7 +39,10 @@ class PlaybackState {
   final double speed;
   final String? error;
 
-  bool get active => current != null;
+  /// Title of a live stream (radio) when one is playing instead of verses.
+  final String? stream;
+
+  bool get active => current != null || stream != null;
 
   PlaybackState copyWith({
     AyahRef? current,
@@ -50,17 +54,18 @@ class PlaybackState {
     double? speed,
     String? error,
     bool clearError = false,
-  }) =>
-      PlaybackState(
-        current: current ?? this.current,
-        playing: playing ?? this.playing,
-        loading: loading ?? this.loading,
-        surah: surah ?? this.surah,
-        repeatEach: repeatEach ?? this.repeatEach,
-        rangeEnd: rangeEnd ?? this.rangeEnd,
-        speed: speed ?? this.speed,
-        error: clearError ? null : (error ?? this.error),
-      );
+    String? stream,
+  }) => PlaybackState(
+    current: current ?? this.current,
+    playing: playing ?? this.playing,
+    loading: loading ?? this.loading,
+    surah: surah ?? this.surah,
+    repeatEach: repeatEach ?? this.repeatEach,
+    rangeEnd: rangeEnd ?? this.rangeEnd,
+    speed: speed ?? this.speed,
+    error: clearError ? null : (error ?? this.error),
+    stream: stream ?? this.stream,
+  );
 }
 
 /// Verse-by-verse recitation with lock-screen controls (Media Session via
@@ -76,18 +81,22 @@ class AudioController extends Notifier<PlaybackState> {
 
   AudioPlayer _create() {
     final player = AudioPlayer();
-    _subs.add(player.currentIndexStream.listen((i) {
-      if (i == null || i >= _queue.length) return;
-      final ref = _queue[i];
-      state = state.copyWith(current: ref);
-      if (ref.ayah > 0) this.ref.read(activityProvider.notifier).markAyahRead(ref);
-    }));
-    _subs.add(player.playerStateStream.listen((s) {
-      state = state.copyWith(
-        playing: s.playing && s.processingState != ProcessingState.completed,
-        loading: s.processingState == ProcessingState.loading || s.processingState == ProcessingState.buffering,
-      );
-    }));
+    _subs.add(
+      player.currentIndexStream.listen((i) {
+        if (i == null || i >= _queue.length) return;
+        final ref = _queue[i];
+        state = state.copyWith(current: ref);
+        if (ref.ayah > 0) this.ref.read(activityProvider.notifier).markAyahRead(ref);
+      }),
+    );
+    _subs.add(
+      player.playerStateStream.listen((s) {
+        state = state.copyWith(
+          playing: s.playing && s.processingState != ProcessingState.completed,
+          loading: s.processingState == ProcessingState.loading || s.processingState == ProcessingState.buffering,
+        );
+      }),
+    );
     _subs.add(player.errorStream.listen((e) => state = state.copyWith(error: e.message ?? 'playback')));
     return player;
   }
@@ -121,31 +130,48 @@ class AudioController extends Notifier<PlaybackState> {
     if (from == 1 && surah != 1 && surah != 9) {
       final local = File('${dir.path}/${reciter.fileName(1, 1)}');
       _queue.add(AyahRef(surah, 0));
-      sources.add(AudioSource.uri(
-        local.existsSync() ? Uri.file(local.path) : reciter.url(1, 1),
-        tag: MediaItem(id: '${reciter.id}/$surah/0', title: info.nameAr, album: info.translit, artist: reciter.nameAr),
-      ));
+      sources.add(
+        AudioSource.uri(
+          local.existsSync() ? Uri.file(local.path) : reciter.url(1, 1),
+          tag: MediaItem(id: '${reciter.id}/$surah/0', title: info.nameAr, album: info.translit, artist: reciter.nameAr),
+        ),
+      );
     }
     for (var a = from; a <= end; a++) {
       for (var r = 0; r < reps; r++) {
         _queue.add(AyahRef(surah, a));
         final local = File('${dir.path}/${reciter.fileName(surah, a)}');
         final uri = local.existsSync() ? Uri.file(local.path) : reciter.url(surah, a);
-        sources.add(AudioSource.uri(
-          uri,
-          tag: MediaItem(
-            id: '${reciter.id}/$surah/$a/$r',
-            title: '${info.nameAr} · $a',
-            album: info.translit,
-            artist: reciter.nameAr,
+        sources.add(
+          AudioSource.uri(
+            uri,
+            tag: MediaItem(id: '${reciter.id}/$surah/$a/$r', title: '${info.nameAr} · $a', album: info.translit, artist: reciter.nameAr),
           ),
-        ));
+        );
       }
     }
-    state = state.copyWith(surah: surah, rangeEnd: to, repeatEach: reps, current: AyahRef(surah, from), clearError: true);
+    state = PlaybackState(surah: surah, rangeEnd: to, repeatEach: reps, current: AyahRef(surah, from), speed: state.speed);
     try {
       await _player.setAudioSources(sources, initialIndex: 0, preload: true);
       await _player.setSpeed(state.speed);
+      unawaited(_player.play());
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), playing: false);
+    }
+  }
+
+  /// Plays a live radio stream (no verse tracking).
+  Future<void> playStream(String url, String title) async {
+    _queue.clear();
+    state = PlaybackState(stream: title, speed: 1.0);
+    try {
+      await _player.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(url),
+          tag: MediaItem(id: url, title: title, album: 'Mishkah · Radio'),
+        ),
+      );
+      await _player.setSpeed(1.0);
       unawaited(_player.play());
     } catch (e) {
       state = state.copyWith(error: e.toString(), playing: false);

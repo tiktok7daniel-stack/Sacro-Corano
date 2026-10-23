@@ -35,14 +35,15 @@ class AzkarData {
     final cats = <AzkarCategory>[];
     var i = 0;
     for (final c in (j['categories'] as List).cast<Map<String, dynamic>>()) {
-      cats.add(AzkarCategory(
-        id: i++,
-        name: c['name'] as String,
-        items: [
-          for (final z in (c['items'] as List).cast<Map<String, dynamic>>())
-            Zikr(text: z['t'] as String, count: z['c'] as int, reference: z['r'] as String),
-        ],
-      ));
+      cats.add(
+        AzkarCategory(
+          id: i++,
+          name: c['name'] as String,
+          items: [
+            for (final z in (c['items'] as List).cast<Map<String, dynamic>>()) Zikr(text: z['t'] as String, count: z['c'] as int, reference: z['r'] as String),
+          ],
+        ),
+      );
     }
     return AzkarData(cats, j['source'] as String);
   }
@@ -63,4 +64,26 @@ class AzkarData {
   static const distress = 'دعاء الهم والحزن';
   static const travel = 'دعاء السفر';
   static const istighfar = 'الاستغفار و التوبة';
+  static const ruqyaQuran = 'الرُّقية الشرعية من القرآن الكريم';
+  static const ruqyaSunnah = 'الرُّقية الشرعية من السنة النبوية';
+  static const tasbihCat = 'التسبيح، التحميد، التهليل، التكبير';
+
+  /// The adhkar said inside the prayer, from the opening to the salam.
+  static const inPrayer = [
+    'دعاء الاستفتاح',
+    'دعاء الركوع',
+    'دعاء الرفع من الركوع',
+    'دعاء السجود',
+    'دعاء الجلسة بين السجدتين',
+    'التشهد',
+    'الصلاة على النبي بعد التشهد',
+    'الدعاء بعد التشهد الأخير قبل السلام',
+  ];
+
+  static const ruqya = [ruqyaQuran, ruqyaSunnah];
+
+  /// Several categories joined into one set, in the given order.
+  AzkarCategory merged(String name, List<String> names) => AzkarCategory(id: -1, name: name, items: [for (final n in names) ...?byName(n)?.items]);
+
+  int get itemCount => categories.fold(0, (a, c) => a + c.items.length);
 }

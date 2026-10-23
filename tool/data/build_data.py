@@ -13,6 +13,7 @@ Sources (fetch them first, see docs/DATA_SOURCES.md):
                                azkar collection         MIT
   npm  quran-meta@7.0.0        Hafs page / juz / hizb / sajda lists  MIT
   git  spa5k/tafsir_api        Tafsir al-Muyassar (King Fahd Complex)  MIT
+  git  fawazahmed0/hadith-api  Forty Nawawi + Forty Qudsi (ar/en)      Unlicense
 
 Usage:
   python3 tool/data/build_data.py --src /path/to/downloads --out assets/data
@@ -28,7 +29,8 @@ import sys
 
 def write_gz(path, obj):
     raw = json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode()
-    with gzip.open(path, "wb", compresslevel=9) as f:
+    # mtime=0 keeps the output byte-identical between builds.
+    with open(path, "wb") as fh, gzip.GzipFile(fileobj=fh, mode="wb", compresslevel=9, mtime=0) as f:
         f.write(raw)
     print(f"  {os.path.basename(path)}: {len(raw)//1024} KB raw")
 
@@ -166,6 +168,21 @@ def main():
         "source": "حصن المسلم - islam.js 1.3.0 azkar-collection (MIT)",
         "categories": cats,
     })
+    # ---- Hadith: An-Nawawi's Forty and Forty Hadith Qudsi ----
+    hd = os.path.join(src, "hadith/editions")
+    if os.path.isdir(hd):
+        cols = []
+        for key, ar_name, en_name in [("nawawi", "الأربعون النووية", "An-Nawawi's Forty"),
+                                      ("qudsi", "الأحاديث القدسية الأربعون", "Forty Hadith Qudsi")]:
+            ar = json.load(open(os.path.join(hd, f"ara-{key}.min.json")))["hadiths"]
+            en = {h["hadithnumber"]: h["text"].strip() for h in json.load(open(os.path.join(hd, f"eng-{key}.min.json")))["hadiths"]}
+            rows = [{"n": h["hadithnumber"], "ar": h["text"].strip(), "en": en.get(h["hadithnumber"], "")}
+                    for h in ar if h["text"].strip()]
+            cols.append({"id": key, "ar": ar_name, "en": en_name, "items": rows})
+        write_gz(os.path.join(out, "hadith.json.gz"), {
+            "source": "github.com/fawazahmed0/hadith-api (Unlicense / public domain)",
+            "collections": cols,
+        })
     print("done")
 
 

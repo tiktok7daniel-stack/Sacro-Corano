@@ -17,7 +17,7 @@ import '../quran/reader_screen.dart';
 import '../share/share_card.dart';
 import '../../domain/quran_models.dart';
 
-/// Verse, dua and dhikr of the day, in a horizontally swipeable row.
+/// "Today's lights": the verse of the day full width, then dua and dhikr.
 class DailyCards extends ConsumerWidget {
   const DailyCards({super.key});
 
@@ -25,91 +25,120 @@ class DailyCards extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final quran = ref.watch(quranProvider).value;
     final azkar = ref.watch(azkarProvider).value;
-    if (quran == null) return const SizedBox(height: 180);
+    if (quran == null) return const SizedBox(height: 420);
     final now = DateTime.now();
     final verse = verseOfTheDay(now);
     final dua = duaOfTheDay(now);
     final morning = azkar?.byName(AzkarData.afterPrayer) ?? azkar?.categories.first;
     final zikr = morning == null ? null : morning.items[dailyIndex(now, morning.items.length, salt: 3)];
 
-    Widget card({required String label, required IconData icon, required String body, required String foot, required List<Color> colors, required VoidCallback onTap, VoidCallback? onShare, bool quranFont = true}) =>
-        SizedBox(
-          width: MediaQuery.sizeOf(context).width * 0.78,
-          child: AppCard(
-            onTap: onTap,
-            gradient: LinearGradient(begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd, colors: colors),
-            borderColor: colors.last.withValues(alpha: 0.6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    Widget card({
+      required String label,
+      required IconData icon,
+      required String body,
+      required String foot,
+      required List<Color> colors,
+      required VoidCallback onTap,
+      VoidCallback? onShare,
+      bool quranFont = true,
+      int lines = 4,
+      double size = 20,
+    }) => SizedBox(
+      height: lines > 3 ? 220 : 200,
+      child: AppCard(
+        onTap: onTap,
+        gradient: LinearGradient(begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd, colors: colors),
+        borderColor: colors.last.withValues(alpha: 0.6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(children: [
-                  Icon(icon, color: Brand.tealBright, size: 20),
-                  const SizedBox(width: 8),
-                  Text(label, style: const TextStyle(color: Brand.tealBright, fontWeight: FontWeight.w700)),
-                  const Spacer(),
-                  if (onShare != null)
-                    InkResponse(onTap: onShare, child: const Icon(Icons.ios_share_rounded, size: 18, color: Brand.textMid)),
-                ]),
-                const SizedBox(height: 10),
-                Expanded(
+                Icon(icon, color: Brand.tealBright, size: 20),
+                const SizedBox(width: 8),
+                Flexible(
                   child: Text(
-                    body,
-                    maxLines: 4,
+                    label,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(
-                      fontFamily: quranFont ? Brand.quranFont : Brand.naskhFont,
-                      fontSize: 20,
-                      height: 1.9,
-                      color: Colors.white,
-                    ),
+                    style: const TextStyle(color: Brand.tealBright, fontWeight: FontWeight.w700),
                   ),
                 ),
-                Text(foot, style: const TextStyle(color: Brand.textMid, fontSize: 12)),
+                const Spacer(),
+                if (onShare != null)
+                  InkResponse(
+                    onTap: onShare,
+                    child: const Icon(Icons.ios_share_rounded, size: 18, color: Brand.textMid),
+                  ),
               ],
             ),
-          ),
-        );
-
-    return SizedBox(
-      height: 210,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
-        children: [
-          card(
-            label: context.tr('verse_of_day'),
-            icon: Icons.auto_awesome_rounded,
-            body: quran.textOf(verse),
-            foot: '${quran.surah(verse.surah).nameAr} · ${context.num(verse.ayah)}',
-            colors: const [Color(0xFF123F48), Color(0xFF0E2A33)],
-            onTap: () => push(context, ReaderScreen(surah: verse.surah, initialAyah: verse.ayah)),
-            onShare: () => shareVerseImage(context, ref, AyahRange(verse.surah, verse.ayah, verse.ayah)),
-          ),
-          const SizedBox(width: 12),
-          card(
-            label: context.tr('dua_of_day'),
-            icon: Icons.front_hand_rounded,
-            body: quran.textOf(dua),
-            foot: '${quran.surah(dua.surah).nameAr} · ${context.num(dua.ayah)}',
-            colors: const [Color(0xFF1B2F3A), Color(0xFF14212A)],
-            onTap: () => push(context, ReaderScreen(surah: dua.surah, initialAyah: dua.ayah)),
-            onShare: () => shareVerseImage(context, ref, AyahRange(dua.surah, dua.ayah, dua.ayah)),
-          ),
-          if (zikr != null) ...[
-            const SizedBox(width: 12),
-            card(
-              label: context.tr('zikr_of_day'),
-              icon: Icons.verified_rounded,
-              body: zikr.text,
-              foot: '${zikr.reference}${zikr.count > 1 ? ' · ${context.tr('times', {'n': zikr.count})}' : ''}',
-              colors: const [Color(0xFF1E2A26), Color(0xFF151F1C)],
-              quranFont: false,
-              onTap: () => openAzkarCategory(context, ref, morning!.name),
+            const SizedBox(height: 10),
+            Expanded(
+              child: Text(
+                body,
+                maxLines: lines,
+                overflow: TextOverflow.ellipsis,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(fontFamily: quranFont ? Brand.quranFont : Brand.naskhFont, fontSize: size, height: 1.9, color: Colors.white),
+              ),
+            ),
+            Text(
+              foot,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Brand.textMid, fontSize: 12),
             ),
           ],
-        ],
+        ),
       ),
+    );
+
+    return Column(
+      children: [
+        card(
+          label: context.tr('verse_of_day'),
+          icon: Icons.auto_awesome_rounded,
+          body: quran.textOf(verse),
+          foot: '${quran.surah(verse.surah).nameAr} · ${context.num(verse.ayah)}',
+          colors: const [Color(0xFF123F48), Color(0xFF0E2A33)],
+          onTap: () => push(context, ReaderScreen(surah: verse.surah, initialAyah: verse.ayah)),
+          onShare: () => shareVerseImage(context, ref, AyahRange(verse.surah, verse.ayah, verse.ayah)),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: card(
+                lines: 3,
+                size: 16,
+                label: context.tr('dua_of_day'),
+                icon: Icons.front_hand_rounded,
+                body: quran.textOf(dua),
+                foot: '${quran.surah(dua.surah).nameAr} · ${context.num(dua.ayah)}',
+                colors: const [Color(0xFF1B2F3A), Color(0xFF14212A)],
+                onTap: () => push(context, ReaderScreen(surah: dua.surah, initialAyah: dua.ayah)),
+                onShare: () => shareVerseImage(context, ref, AyahRange(dua.surah, dua.ayah, dua.ayah)),
+              ),
+            ),
+            if (zikr != null) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: card(
+                  lines: 3,
+                  size: 16,
+                  label: context.tr('zikr_of_day'),
+                  icon: Icons.verified_rounded,
+                  body: zikr.text,
+                  foot: '${zikr.reference}${zikr.count > 1 ? ' · ${context.tr('times', {'n': zikr.count})}' : ''}',
+                  colors: const [Color(0xFF1E2A26), Color(0xFF151F1C)],
+                  quranFont: false,
+                  onTap: () => openAzkarCategory(context, ref, morning!.name),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 }
@@ -129,31 +158,36 @@ class DailyChecklistScreen extends ConsumerWidget {
     final times = calc?.forDate(DateTime.now());
 
     Widget tile(String title, bool done, {String? sub, VoidCallback? onTap}) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: AppCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            onTap: onTap,
-            child: Row(children: [
-              AnimatedSwitcher(
-                duration: Motion.of(context).short,
-                transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
-                child: Icon(
-                  done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-                  key: ValueKey(done),
-                  color: done ? Brand.tealBright : Brand.textLow,
-                  size: 28,
-                ),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        onTap: onTap,
+        child: Row(
+          children: [
+            AnimatedSwitcher(
+              duration: Motion.of(context).short,
+              transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+              child: Icon(
+                done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                key: ValueKey(done),
+                color: done ? Brand.tealBright : Brand.textLow,
+                size: 28,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                   if (sub != null) Text(sub, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
-                ]),
+                ],
               ),
-            ]),
-          ),
-        );
+            ),
+          ],
+        ),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(),
@@ -173,10 +207,8 @@ class DailyChecklistScreen extends ConsumerWidget {
               },
             ),
           SectionHeader(context.tr('azkar')),
-          tile(context.tr('morning_azkar'), today?.azkar.contains(AzkarData.morning) ?? false,
-              onTap: () => openAzkarCategory(context, ref, AzkarData.morning)),
-          tile(context.tr('evening_azkar'), today?.azkar.contains(AzkarData.evening) ?? false,
-              onTap: () => openAzkarCategory(context, ref, AzkarData.evening)),
+          tile(context.tr('morning_azkar'), today?.azkar.contains(AzkarData.morning) ?? false, onTap: () => openAzkarCategory(context, ref, AzkarData.morning)),
+          tile(context.tr('evening_azkar'), today?.azkar.contains(AzkarData.evening) ?? false, onTap: () => openAzkarCategory(context, ref, AzkarData.evening)),
           SectionHeader(context.tr('quran')),
           tile(
             context.tr('khatma'),
@@ -184,10 +216,8 @@ class DailyChecklistScreen extends ConsumerWidget {
             sub: khatma == null ? context.tr('khatma_none') : context.tr('khatma_today', {'n': khatma.todayTarget(DateTime.now())}),
             onTap: () => push(context, const KhatmaScreen()),
           ),
-          tile(context.tr('hifz_review'), hifzDue == 0,
-              sub: context.tr('hifz_due_n', {'n': hifzDue}), onTap: () => push(context, const HifzScreen())),
-          tile(context.tr('tasbih'), (today?.tasbih ?? 0) >= s.tasbihGoal,
-              sub: '${context.num(today?.tasbih ?? 0)} / ${context.num(s.tasbihGoal)}'),
+          tile(context.tr('hifz_review'), hifzDue == 0, sub: context.tr('hifz_due_n', {'n': hifzDue}), onTap: () => push(context, const HifzScreen())),
+          tile(context.tr('tasbih'), (today?.tasbih ?? 0) >= s.tasbihGoal, sub: '${context.num(today?.tasbih ?? 0)} / ${context.num(s.tasbihGoal)}'),
         ],
       ),
     );
