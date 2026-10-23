@@ -61,7 +61,7 @@ On every push (workflow *Android CI*):
 2. Artifact **`mishkah-apks`**: `mishkah-debug.apk`, `mishkah-release-universal.apk`,
    per-ABI release APKs (`armeabi-v7a`, `arm64-v8a`, `x86_64`), `mishkah-release.aab`, `SHA256SUMS.txt`
 
-Pushing a tag `v1.2.3` also creates a GitHub Release with those files attached.
+Pushing a tag `v1.2.3`, or running the workflow manually with **release ✓**, also creates a GitHub Release (tag from the `pubspec.yaml` version) with those files attached.
 
 The emulator integration test runs on demand: *Actions → Android CI → Run
 workflow → integration ✓*.

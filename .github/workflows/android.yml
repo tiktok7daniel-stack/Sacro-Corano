@@ -11,6 +11,10 @@ on:
         description: 'Run the integration test on an Android emulator'
         type: boolean
         default: false
+      release:
+        description: 'Publish the APKs as a GitHub Release (tag v<pubspec version>)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -53,6 +57,8 @@ jobs:
     name: Build APKs & AAB
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -105,11 +111,21 @@ jobs:
         with:
           name: mishkah-apks
           path: dist/
-      - name: Publish GitHub Release (tags)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Release tag name
+        id: version
+        run: |
+          echo "tag=v$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_OUTPUT"
+      - name: Publish GitHub Release (tags or manual)
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Mishkah ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || steps.version.outputs.tag }}
+          files: |
+            dist/*.apk
+            dist/*.aab
+            dist/SHA256SUMS.txt
           generate_release_notes: true
 
   integration:
