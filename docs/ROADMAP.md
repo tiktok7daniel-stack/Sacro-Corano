@@ -3,6 +3,20 @@
 ## Shipped in 1.0
 See the README feature list.
 
+## Shipped in 1.3
+- Recitation check by voice (word-by-word, hide-text memorisation mode).
+- Ramadan mode with suhoor / iftar, juz-a-day plan, fasting log and qada.
+- Smart reminders (Kahf on Friday, voluntary fasts, salawat).
+
+## Needs a licensed source before it can ship
+- **Tajweed colouring** needs rule-annotated Quran text under a licence that
+  allows bundling (the bundled QuranEnc text has no tajweed markup).
+- **Real adhan recordings** (Makkah, Madinah, Egypt…) need freely licensed
+  audio files; the adhan notification uses the system sound until then.
+- Prayer make-up (qada) tracker, a bigger MP3Quran library, Zakat calculator,
+  Hajj guide, Names of Allah and quizzes follow the same rule: no text
+  without a documented, permissive source.
+
 ## Next (1.1)
 - **QCF / KFGQPC page rendering** as an optional download: print-exact line
   layout of the 604 Madani pages (needs King Fahd Complex licence clearance).

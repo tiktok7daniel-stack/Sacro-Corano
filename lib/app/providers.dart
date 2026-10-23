@@ -12,10 +12,12 @@ import '../data/quran/quran_data.dart';
 import '../domain/khatma.dart';
 import '../domain/prayer_times.dart';
 import '../domain/quran_models.dart';
+import '../domain/ramadan.dart';
 import '../domain/search_engine.dart';
 import '../domain/settings.dart';
 import '../domain/srs.dart';
 import '../domain/user_models.dart';
+import '../services/speech.dart';
 
 // ---------------------------------------------------------------------------
 // Infrastructure
@@ -404,3 +406,52 @@ class DedicationsController extends _ListStore<Dedication> {
 }
 
 final dedicationsProvider = NotifierProvider<DedicationsController, List<Dedication>>(DedicationsController.new);
+
+// ---------------------------------------------------------------------------
+// Ramadan & recitation
+// ---------------------------------------------------------------------------
+
+class FastingController extends Notifier<FastingLedger> {
+  @override
+  FastingLedger build() => FastingLedger.fromJson(ref.read(storageProvider).readMap('fasting'));
+
+  void _save(FastingLedger l) {
+    state = l;
+    ref.read(storageProvider).write('fasting', l.toJson());
+  }
+
+  /// 'f' fasted, 'm' missed, null clears the day.
+  void mark(int year, int day, String? status) => _save(state.mark(year, day, status));
+
+  void completeQada() {
+    if (state.qadaRemaining > 0) _save(state.copyWith(qadaDone: state.qadaDone + 1));
+  }
+
+  void undoQada() {
+    if (state.qadaDone > 0) _save(state.copyWith(qadaDone: state.qadaDone - 1));
+  }
+
+  void setOwedExtra(int n) => _save(state.copyWith(qadaOwedExtra: n < 0 ? 0 : n));
+}
+
+final fastingProvider = NotifierProvider<FastingController, FastingLedger>(FastingController.new);
+
+/// Juz read during Ramadan, keyed by Hijri year.
+class RamadanJuzController extends Notifier<Map<String, List<int>>> {
+  @override
+  Map<String, List<int>> build() => decodeJuzLog(ref.read(storageProvider).readMap('ramadanJuz'));
+
+  bool isRead(int year, int juz) => state['$year']?.contains(juz) ?? false;
+
+  void toggle(int year, int juz) {
+    final cur = {...(state['$year'] ?? <int>[])};
+    cur.contains(juz) ? cur.remove(juz) : cur.add(juz);
+    state = {...state, '$year': cur.toList()..sort()};
+    ref.read(storageProvider).write('ramadanJuz', state);
+  }
+}
+
+final ramadanJuzProvider = NotifierProvider<RamadanJuzController, Map<String, List<int>>>(RamadanJuzController.new);
+
+/// Overridden in tests with a fake recogniser.
+final speechEngineProvider = Provider<SpeechEngine>((ref) => DeviceSpeech());

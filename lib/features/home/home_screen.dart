@@ -26,6 +26,8 @@ import '../qibla/qibla_screen.dart';
 import '../quran/reader_screen.dart';
 import '../radio/radio_screen.dart';
 import '../reciters/reciters_screen.dart';
+import '../ramadan/ramadan_screen.dart';
+import '../recitation/recitation_screen.dart';
 import '../sadaqa/sadaqa_screen.dart';
 import '../settings/settings_screen.dart';
 import '../sira/sira_screen.dart';
@@ -150,6 +152,7 @@ class HomeScreen extends ConsumerWidget {
               colors: Brand.gKhatma,
               onTap: () => push(context, const SadaqaScreen()),
             ),
+            GradientTile(label: context.tr('ram_title'), icon: Icons.nights_stay_rounded, colors: Brand.gMosque, onTap: () => push(context, const RamadanScreen())),
             GradientTile(label: context.tr('qibla'), icon: Icons.explore_rounded, colors: Brand.gQibla, onTap: () => push(context, const QiblaScreen())),
             GradientTile(
               label: context.tr('ruqya'),
@@ -196,6 +199,7 @@ class HomeScreen extends ConsumerWidget {
               onTap: () => push(context, const ProphetsScreen()),
             ),
             GradientTile(label: context.tr('hifz'), icon: Icons.psychology_rounded, colors: Brand.gHifz, onTap: () => push(context, const HifzScreen())),
+            GradientTile(label: context.tr('rec_title'), icon: Icons.mic_rounded, colors: Brand.gDua, onTap: () => push(context, const RecitationScreen())),
             GradientTile(label: context.tr('khatma'), icon: Icons.flag_rounded, colors: Brand.gKhatma, onTap: () => push(context, const KhatmaScreen())),
             GradientTile(label: context.tr('tadabbur'), icon: Icons.hub_rounded, colors: Brand.gStats, onTap: () => push(context, const TadabburScreen())),
           ]),

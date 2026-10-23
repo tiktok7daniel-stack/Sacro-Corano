@@ -21,6 +21,7 @@ import '../../services/backup.dart';
 import '../prayer/prayer_screen.dart';
 import '../reciters/reciters_screen.dart';
 import 'about_screen.dart';
+import 'smart_reminders_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -149,6 +150,13 @@ class SettingsScreen extends ConsumerWidget {
               set((x) => x.copyWith(azkarReminders: v));
               Bootstrap.reschedule(context, ref);
             },
+          ),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome_rounded),
+            title: Text(context.tr('smart_title')),
+            subtitle: Text(context.tr('smart_sub')),
+            trailing: const Icon(Icons.chevron_left_rounded),
+            onTap: () => push(context, const SmartRemindersScreen()),
           ),
           ListTile(
             leading: const Icon(Icons.alarm_rounded),

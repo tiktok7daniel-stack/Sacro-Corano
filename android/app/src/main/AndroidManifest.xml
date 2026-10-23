@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Recitation check: the microphone feeds the device's speech recogniser. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Background recitation with lock-screen controls. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -19,6 +21,7 @@
     <!-- The compass is optional: the qibla screen falls back to a bearing dial. -->
     <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
         android:label="مشكاة"
@@ -93,6 +96,10 @@
         <intent>
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="https"/>
+        </intent>
+        <!-- Speech recogniser for the recitation check (speech_to_text) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
         <!-- Device text-to-speech for the audio tafsir (flutter_tts) -->
         <intent>

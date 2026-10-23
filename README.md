@@ -89,6 +89,19 @@ that were considered and the brand guidelines.
   Quran, filterable (Ulul ʿAzm / messengers / prophets). Each story is a guided
   journey through the Quran passages, with the Muyassar explanation for each
   verse and audio for the passage. No invented narrative.
+- **Recitation check**: recite a verse aloud and the app follows you word by
+  word using the device's Arabic speech recogniser: green for right, red for a
+  different word, an outline for a skipped one. A "hide the text" mode turns
+  it into a memorisation test. It is an approximate aid, not a tajweed judge.
+  By default Android's recogniser may use Google's servers; the "on-device
+  only" switch keeps the audio on the phone (needs the offline Arabic pack).
+- **Ramadan mode**: suhoor / iftar countdown, a one-juz-a-day khatma plan that
+  fits a 29- or 30-day month, a fasting log, and a **qada tracker** that counts
+  the days you missed (plus older ones you add) and the ones you have made up.
+  Suhoor and iftar alerts switch on by themselves in Ramadan.
+- **Smart reminders** (opt-in): Surat al-Kahf on Friday morning, an evening
+  note before Monday/Thursday and white-day fasts (never in Ramadan or on
+  Eid), and a daily reminder to send blessings on the Prophet ﷺ.
 - **Focused listening**: only the verse being recited, cross-fading as the
   recitation moves on.
 - **Kids mode**: Juz ʿAmma with large text, repeat-listening and stars a parent

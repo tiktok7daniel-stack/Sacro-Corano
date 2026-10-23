@@ -9,6 +9,7 @@ import '../core/l10n/strings.dart';
 import '../domain/prayer_times.dart';
 import '../domain/qibla.dart';
 import '../domain/settings.dart';
+import '../domain/smart_reminders.dart';
 import '../features/onboarding/onboarding_sheet.dart';
 import '../services/home_widget_sync.dart';
 import '../services/location.dart';
@@ -75,6 +76,14 @@ abstract final class Bootstrap {
         s.preAdhanMinutes,
         s.azkarReminders,
         s.wirdReminderHour,
+        s.hijriOffset,
+        s.ramadanReminders,
+        s.suhoorLeadMinutes,
+        s.kahfReminder,
+        s.fastMonThuReminder,
+        s.fastWhiteReminder,
+        s.salawatReminder,
+        s.salawatHour,
       ]);
 
   /// Re-schedules notifications and refreshes the home-screen widget.
@@ -90,10 +99,29 @@ abstract final class Bootstrap {
     final morning = context.tr('reminder_morning');
     final evening = context.tr('reminder_evening');
     final wird = context.tr('reminder_wird');
+    final suhoor = context.tr('rem_suhoor');
+    final suhoorBody = context.tr('rem_suhoor_body', {'n': s.suhoorLeadMinutes});
+    final iftar = context.tr('rem_iftar');
+    final iftarBody = context.tr('rem_iftar_body');
+    final smartText = <ReminderKind, (String, String)>{
+      ReminderKind.kahf: (context.tr('rem_kahf'), context.tr('rem_kahf_body')),
+      ReminderKind.fastWhite: (context.tr('rem_white'), context.tr('rem_white_body')),
+      ReminderKind.salawat: (context.tr('rem_salawat'), context.tr('rem_salawat_body')),
+    };
+    final monTitle = context.tr('rem_fast_mon');
+    final thuTitle = context.tr('rem_fast_thu');
+    final monThuBody = context.tr('rem_fast_body');
     Future<void> run() async {
       try {
         await Notifications.instance.schedulePrayers(s, titles: titles, body: body);
         await Notifications.instance.scheduleReminders(s, morning: morning, evening: evening, wird: wird);
+        await Notifications.instance.scheduleRamadan(s, suhoor: suhoor, suhoorBody: suhoorBody, iftar: iftar, iftarBody: iftarBody);
+        await Notifications.instance.scheduleSmart(
+          s,
+          text: (kind, weekday) => kind == ReminderKind.fastMonThu
+              ? (weekday == DateTime.monday ? monTitle : thuTitle, monThuBody)
+              : smartText[kind]!,
+        );
         await storage.write('scheduleSig', sig);
       } catch (e) {
         debugPrint('Scheduling failed: $e');

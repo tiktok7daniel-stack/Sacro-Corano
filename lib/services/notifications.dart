@@ -5,7 +5,9 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/prayer_times.dart';
+import '../domain/ramadan.dart';
 import '../domain/settings.dart';
+import '../domain/smart_reminders.dart';
 
 /// Schedules prayer, azkar and wird reminders as exact local alarms, so
 /// they fire without any server or network connection.
@@ -29,6 +31,22 @@ class Notifications {
     'reminders',
     'التذكيرات',
     channelDescription: 'أذكار الصباح والمساء والورد اليومي',
+    importance: Importance.defaultImportance,
+    icon: 'ic_stat_mishkah',
+  );
+
+  static const _ramadanChannel = AndroidNotificationDetails(
+    'ramadan',
+    'رمضان',
+    channelDescription: 'تنبيه السحور والإفطار',
+    importance: Importance.high,
+    priority: Priority.high,
+    icon: 'ic_stat_mishkah',
+  );
+  static const _smartChannel = AndroidNotificationDetails(
+    'smart_reminders',
+    'تذكيرات ذكية',
+    channelDescription: 'سورة الكهف، الصيام المستحب، الصلاة على النبي',
     importance: Importance.defaultImportance,
     icon: 'ic_stat_mishkah',
   );
@@ -72,6 +90,8 @@ class Notifications {
 
   static const _prayerIdBase = 1000;
   static const _reminderIdBase = 5000;
+  static const _ramadanIdBase = 6000;
+  static const _smartIdBase = 7000;
 
   /// Re-schedules the next [days] days of prayer alerts. Called on launch,
   /// whenever settings change and when the location changes (travel mode).
@@ -124,6 +144,49 @@ class Notifications {
       title: wird,
       matchDateTimeComponents: DateTimeComponents.time,
     );
+  }
+
+  /// Suhoor and iftar alerts for the Ramadan days in the next two weeks.
+  /// Suhoor is announced [AppSettings.suhoorLeadMinutes] before Fajr.
+  Future<void> scheduleRamadan(AppSettings s, {required String suhoor, required String suhoorBody, required String iftar, required String iftarBody}) async {
+    await _init();
+    await _cancelRange(_ramadanIdBase, 100);
+    if (!s.ramadanReminders || !s.hasLocation) return;
+    final calc = PrayerCalculator(s);
+    final now = DateTime.now();
+    var id = _ramadanIdBase;
+    for (var d = 0; d < 14; d++) {
+      final date = now.add(Duration(days: d));
+      if (ramadanDay(date, offsetDays: s.hijriOffset) == null) continue;
+      final day = calc.forDate(date);
+      final sa = day[PrayerName.fajr].subtract(Duration(minutes: s.suhoorLeadMinutes));
+      final ia = day[PrayerName.maghrib];
+      if (sa.isAfter(now)) await _schedule(id++, sa, suhoor, suhoorBody, _ramadanChannel);
+      if (ia.isAfter(now)) await _schedule(id++, ia, iftar, iftarBody, _ramadanChannel);
+    }
+  }
+
+  /// Friday Kahf, voluntary-fast eves and the blessings reminder.
+  Future<void> scheduleSmart(AppSettings s, {required (String, String) Function(ReminderKind kind, int? weekday) text}) async {
+    await _init();
+    await _cancelRange(_smartIdBase, 100);
+    final plan = planReminders(
+      ReminderPrefs(
+        kahf: s.kahfReminder,
+        fastMonThu: s.fastMonThuReminder,
+        fastWhite: s.fastWhiteReminder,
+        salawat: s.salawatReminder,
+        salawatHour: s.salawatHour,
+      ),
+      DateTime.now(),
+      hijriOffset: s.hijriOffset,
+    );
+    var id = _smartIdBase;
+    for (final r in plan) {
+      if (id >= _smartIdBase + 100) break;
+      final (title, body) = text(r.kind, r.weekday);
+      await _schedule(id++, r.at, title, body, _smartChannel);
+    }
   }
 
   Future<void> showNow(String title, String body) async {

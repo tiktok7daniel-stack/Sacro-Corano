@@ -33,6 +33,13 @@ class AppSettings {
     this.azkarReminders = true,
     this.wirdReminderHour = 21,
     this.tasbihGoal = 100,
+    this.ramadanReminders = true,
+    this.suhoorLeadMinutes = 45,
+    this.kahfReminder = false,
+    this.fastMonThuReminder = false,
+    this.fastWhiteReminder = false,
+    this.salawatReminder = false,
+    this.salawatHour = 17,
     this.kidsPin,
     this.onboarded = false,
   });
@@ -63,6 +70,13 @@ class AppSettings {
   final bool azkarReminders;
   final int wirdReminderHour;
   final int tasbihGoal;
+  final bool ramadanReminders;
+  final int suhoorLeadMinutes;
+  final bool kahfReminder;
+  final bool fastMonThuReminder;
+  final bool fastWhiteReminder;
+  final bool salawatReminder;
+  final int salawatHour;
   final String? kidsPin;
   final bool onboarded;
 
@@ -95,6 +109,13 @@ class AppSettings {
     bool? azkarReminders,
     int? wirdReminderHour,
     int? tasbihGoal,
+    bool? ramadanReminders,
+    int? suhoorLeadMinutes,
+    bool? kahfReminder,
+    bool? fastMonThuReminder,
+    bool? fastWhiteReminder,
+    bool? salawatReminder,
+    int? salawatHour,
     String? kidsPin,
     bool clearKidsPin = false,
     bool? onboarded,
@@ -126,6 +147,13 @@ class AppSettings {
         azkarReminders: azkarReminders ?? this.azkarReminders,
         wirdReminderHour: wirdReminderHour ?? this.wirdReminderHour,
         tasbihGoal: tasbihGoal ?? this.tasbihGoal,
+        ramadanReminders: ramadanReminders ?? this.ramadanReminders,
+        suhoorLeadMinutes: suhoorLeadMinutes ?? this.suhoorLeadMinutes,
+        kahfReminder: kahfReminder ?? this.kahfReminder,
+        fastMonThuReminder: fastMonThuReminder ?? this.fastMonThuReminder,
+        fastWhiteReminder: fastWhiteReminder ?? this.fastWhiteReminder,
+        salawatReminder: salawatReminder ?? this.salawatReminder,
+        salawatHour: salawatHour ?? this.salawatHour,
         kidsPin: clearKidsPin ? null : (kidsPin ?? this.kidsPin),
         onboarded: onboarded ?? this.onboarded,
       );
@@ -157,6 +185,13 @@ class AppSettings {
         'azkarReminders': azkarReminders,
         'wirdReminderHour': wirdReminderHour,
         'tasbihGoal': tasbihGoal,
+        'ramadanReminders': ramadanReminders,
+        'suhoorLeadMinutes': suhoorLeadMinutes,
+        'kahfReminder': kahfReminder,
+        'fastMonThuReminder': fastMonThuReminder,
+        'fastWhiteReminder': fastWhiteReminder,
+        'salawatReminder': salawatReminder,
+        'salawatHour': salawatHour,
         'kidsPin': kidsPin,
         'onboarded': onboarded,
       };
@@ -207,6 +242,13 @@ class AppSettings {
       azkarReminders: pick('azkarReminders', d.azkarReminders),
       wirdReminderHour: pick('wirdReminderHour', d.wirdReminderHour),
       tasbihGoal: pick('tasbihGoal', d.tasbihGoal),
+      ramadanReminders: pick('ramadanReminders', d.ramadanReminders),
+      suhoorLeadMinutes: pick('suhoorLeadMinutes', d.suhoorLeadMinutes),
+      kahfReminder: pick('kahfReminder', d.kahfReminder),
+      fastMonThuReminder: pick('fastMonThuReminder', d.fastMonThuReminder),
+      fastWhiteReminder: pick('fastWhiteReminder', d.fastWhiteReminder),
+      salawatReminder: pick('salawatReminder', d.salawatReminder),
+      salawatHour: pick('salawatHour', d.salawatHour),
       kidsPin: text('kidsPin'),
       onboarded: pick('onboarded', d.onboarded),
     );
