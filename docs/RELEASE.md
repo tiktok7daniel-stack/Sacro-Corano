@@ -73,3 +73,12 @@ workflow → integration ✓*.
 - [ ] Test on a real device: adhan notification, background audio, widget, page mode
 - [ ] Update `docs/ROADMAP.md` and the release notes
 - [ ] `git tag v1.2.3 && git push --tags`
+
+## Updating without a private key
+
+Without the secrets above, builds are signed with the shared key
+`android/app/mishkah-shared.keystore` (alias `mishkah`, password `android`).
+Because every APK carries the same signature and a higher `versionCode`,
+Android installs each one as an update over the last. The key is public, so
+use your own keystore (see above) before publishing to a store; switching key
+later means users must uninstall once.
