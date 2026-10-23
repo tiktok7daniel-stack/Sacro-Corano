@@ -387,6 +387,7 @@ const _ar = <String, String>{
   'available_offline': 'متاحة دون إنترنت',
   'style_murattal': 'مرتّل',
   'style_mujawwad': 'مجوّد',
+  'style_teacher': 'معلّم (للتعلّم)',
   'audio_source_note': 'التلاوات من EveryAyah.com، آية بآية لتظليل الآية الحالية بدقة.',
   // Onboarding & common
   'welcome': 'أهلًا بك في مشكاة',
@@ -588,6 +589,15 @@ const _ar = <String, String>{
   'rec_perfect': 'ما شاء الله! قرأتها كاملة',
   'rec_review': 'الأحمر كلمة مختلفة، والإطار الأحمر كلمة لم تُقرأ. أعد المحاولة.',
   'rec_disclaimer': 'هذه أداة مساعدة تقريبية: قد يخطئ التعرف على الصوت، وليست بديلًا عن شيخ يصحّح لك التلاوة والتجويد.',
+  'download': 'تحميل',
+  'full_title': 'تلاوات كاملة',
+  'full_sub': 'سور كاملة بملف واحد لكبار القراء، تسمعها أو تحمّلها',
+  'full_search': 'ابحث عن قارئ',
+  'full_sets': '{n} روايات',
+  'full_count': '{n} سورة',
+  'full_failed': 'تعذّر التحميل، تأكد من الإنترنت وحاول مرة أخرى.',
+  'full_card': 'تلاوات كاملة لكبار القراء',
+  'full_card_sub': 'مئات القراء: عبد الباسط والحصري والمنشاوي وغيرهم، سورة كاملة بملف واحد',
 };
 
 const _en = <String, String>{
@@ -959,6 +969,7 @@ const _en = <String, String>{
   'available_offline': 'Available offline',
   'style_murattal': 'Murattal',
   'style_mujawwad': 'Mujawwad',
+  'style_teacher': 'Teacher (for learning)',
   'audio_source_note': 'Recitations from EveryAyah.com, verse by verse for precise highlighting.',
   'welcome': 'Welcome to Mishkah',
   'welcome_body': 'Full mushaf, tafsir, prayer times, adhkar and memorisation — all offline.',
@@ -1159,4 +1170,13 @@ const _en = <String, String>{
   'rec_perfect': 'Well done — the whole verse!',
   'rec_review': 'Red is a different word; a red outline is a word you skipped. Try again.',
   'rec_disclaimer': 'An approximate aid: speech recognition can be wrong, and it is no substitute for a teacher who corrects your recitation and tajweed.',
+  'download': 'Download',
+  'full_title': 'Full recitations',
+  'full_sub': 'Whole surahs in one file by renowned reciters: listen or save',
+  'full_search': 'Search for a reciter',
+  'full_sets': '{n} sets',
+  'full_count': '{n} surahs',
+  'full_failed': 'Download failed. Check your connection and try again.',
+  'full_card': 'Full recitations by renowned reciters',
+  'full_card_sub': 'Hundreds of reciters, each surah as one file',
 };

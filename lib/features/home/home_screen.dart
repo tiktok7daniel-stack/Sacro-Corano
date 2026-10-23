@@ -25,6 +25,7 @@ import '../prophets/prophets_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../quran/reader_screen.dart';
 import '../radio/radio_screen.dart';
+import '../reciters/full_library_screen.dart';
 import '../reciters/reciters_screen.dart';
 import '../ramadan/ramadan_screen.dart';
 import '../recitation/recitation_screen.dart';
@@ -133,6 +134,7 @@ class HomeScreen extends ConsumerWidget {
               colors: Brand.gReciters,
               onTap: () => push(context, const RecitersScreen()),
             ),
+            GradientTile(label: context.tr('full_title'), icon: Icons.library_music_rounded, colors: Brand.gAzkar, onTap: () => push(context, const FullLibraryScreen())),
             GradientTile(label: context.tr('radio'), icon: Icons.radio_rounded, colors: Brand.gHifz, onTap: () => push(context, const RadioScreen())),
             GradientTile(label: context.tr('tasbih'), icon: Icons.touch_app_rounded, colors: Brand.gTasbih, onTap: () => push(context, const TasbihScreen())),
           ]),

@@ -31,11 +31,15 @@ that were considered and the brand guidelines.
 - Surah, juz and hizb-quarter indexes; rubʿ and sajda markers.
 - Adjustable font size; four reading backgrounds (match app, night, paper, sepia);
   the reader's top bar hides while you scroll.
-- **Verse-by-verse recitation** by 18 reciters (Alafasy, al-Husary, Abdul Basit,
+- **Verse-by-verse recitation** by 32 reciters (Alafasy, al-Husary, Abdul Basit,
   al-Minshawi, al-Hudhaify, as-Sudais, ash-Shuraim, al-Muaiqly, …). The verse
   being recited is highlighted and followed automatically. Plays in the
   background with lock-screen and headset controls. Speed control, repeat a
   verse, loop a range, and **per-surah offline download**.
+- **Full recitations library**: hundreds of reciters from MP3Quran.net (Abdul
+  Basit, al-Husary, al-Minshawi, Mustafa Ismail…), each surah as one gapless
+  file, streamed or saved for offline listening. The list is fetched when you
+  open it and cached.
 - **Tafsir**: al-Muyassar ships with the app. Ibn Kathir, at-Tabari,
   al-Qurtubi, as-Saʿdi, al-Baghawi, al-Wasit and al-Mukhtasar download per
   surah and are then cached offline. Asbab al-Nuzul (al-Wahidi) and an English

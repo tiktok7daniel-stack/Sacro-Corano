@@ -8,6 +8,7 @@ import '../../core/theme/brand.dart';
 import '../../core/widgets/common.dart';
 import '../../domain/reciters.dart';
 import '../../services/audio.dart';
+import 'full_library_screen.dart';
 
 /// Choose a reciter, play any surah, download surahs for offline listening.
 class RecitersScreen extends ConsumerWidget {
@@ -22,6 +23,25 @@ class RecitersScreen extends ConsumerWidget {
       ]),
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 140), children: [
         PageTitle(context.tr('reciters'), subtitle: context.tr('reciters_sub')),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: AppCard(
+            gradient: const LinearGradient(colors: Brand.gReciters),
+            borderColor: Colors.transparent,
+            onTap: () => push(context, const FullLibraryScreen()),
+            child: Row(children: [
+              const Icon(Icons.library_music_rounded, color: Colors.white, size: 34),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(context.tr('full_card'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(height: 2),
+                  Text(context.tr('full_card_sub'), style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4)),
+                ]),
+              ),
+            ]),
+          ),
+        ),
         for (final (i, r) in reciters.indexed)
           FadeSlideIn.indexed(
             i,

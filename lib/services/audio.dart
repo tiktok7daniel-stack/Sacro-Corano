@@ -161,15 +161,15 @@ class AudioController extends Notifier<PlaybackState> {
   }
 
   /// Plays a live radio stream (no verse tracking).
-  Future<void> playStream(String url, String title) async {
+  ///
+  /// [localPath] plays a downloaded copy instead of streaming [url].
+  Future<void> playStream(String url, String title, {String? artist, String? localPath}) async {
     _queue.clear();
     state = PlaybackState(stream: title, speed: 1.0);
     try {
+      final tag = MediaItem(id: url, title: title, album: artist == null ? 'Mishkah · Radio' : 'Mishkah', artist: artist);
       await _player.setAudioSource(
-        AudioSource.uri(
-          Uri.parse(url),
-          tag: MediaItem(id: url, title: title, album: 'Mishkah · Radio'),
-        ),
+        localPath != null && File(localPath).existsSync() ? AudioSource.file(localPath, tag: tag) : AudioSource.uri(Uri.parse(url), tag: tag),
       );
       await _player.setSpeed(1.0);
       unawaited(_player.play());
@@ -285,5 +285,61 @@ class AudioDownloads {
   static Future<void> deleteReciter(String id) async {
     final d = Directory('${(await getApplicationDocumentsDirectory()).path}/audio/$id');
     if (await d.exists()) await d.delete(recursive: true);
+  }
+}
+
+
+/// Offline copies of whole-surah recordings (one file per surah), kept apart
+/// from the verse-by-verse downloads.
+class FullDownloads {
+  static Future<Directory> dir(int moshafId) async {
+    final base = await getApplicationDocumentsDirectory();
+    return Directory('${base.path}/audio_full/$moshafId');
+  }
+
+  static Future<File> file(int moshafId, int surah) async => File('${(await dir(moshafId)).path}/${surah.toString().padLeft(3, '0')}.mp3');
+
+  static Future<Set<int>> downloaded(int moshafId) async {
+    final d = await dir(moshafId);
+    if (!await d.exists()) return {};
+    return {
+      await for (final e in d.list())
+        if (e is File && e.path.endsWith('.mp3')) ?int.tryParse(e.uri.pathSegments.last.replaceAll('.mp3', '')),
+    };
+  }
+
+  /// Streams the file to disk so a 100 MB surah never sits in memory.
+  static Future<void> download(int moshafId, int surah, Uri url, {void Function(double)? onProgress, http.Client? client}) async {
+    final target = await file(moshafId, surah);
+    await target.parent.create(recursive: true);
+    final c = client ?? http.Client();
+    final part = File('${target.path}.part');
+    try {
+      final res = await c.send(http.Request('GET', url)).timeout(const Duration(seconds: 40));
+      if (res.statusCode != 200) throw HttpException('HTTP ${res.statusCode}', uri: url);
+      final sink = part.openWrite();
+      var got = 0;
+      try {
+        await for (final chunk in res.stream) {
+          sink.add(chunk);
+          got += chunk.length;
+          final total = res.contentLength;
+          if (total != null && total > 0) onProgress?.call(got / total);
+        }
+      } finally {
+        await sink.close();
+      }
+      await part.rename(target.path);
+    } catch (_) {
+      if (part.existsSync()) await part.delete();
+      rethrow;
+    } finally {
+      if (client == null) c.close();
+    }
+  }
+
+  static Future<void> delete(int moshafId, int surah) async {
+    final f = await file(moshafId, surah);
+    if (f.existsSync()) await f.delete();
   }
 }
