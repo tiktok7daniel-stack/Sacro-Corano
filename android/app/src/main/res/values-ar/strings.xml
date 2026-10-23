@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">مشكاة – آية ومواقيت</string>
+    <string name="widget_description">آية اليوم ومواقيت الصلاة</string>
+    <string name="widget_placeholder">افتح مشكاة مرة لتعبئة الودجت</string>
+</resources>

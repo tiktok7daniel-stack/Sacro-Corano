@@ -1,0 +1,13 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    attributes: { label: What happened?, description: Steps to reproduce and what you expected }
+    validations: { required: true }
+  - type: input
+    attributes: { label: App version, placeholder: "1.0.0" }
+  - type: input
+    attributes: { label: Device and Android version, placeholder: "Pixel 7, Android 15" }
+  - type: textarea
+    attributes: { label: Screenshots or logs }

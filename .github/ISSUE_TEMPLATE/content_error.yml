@@ -1,0 +1,10 @@
+name: Text / content error
+description: A possible error in Quran text, translation, tafsir or adhkar
+labels: [content]
+body:
+  - type: input
+    attributes: { label: Where?, placeholder: "Surah 2 verse 255, Tafsir al-Muyassar" }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: What looks wrong, and the authoritative reference }
+    validations: { required: true }

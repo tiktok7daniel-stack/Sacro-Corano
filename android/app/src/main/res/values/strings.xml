@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">Mishkah – verse &amp; prayer times</string>
+    <string name="widget_description">Verse of the day and today\'s prayer times</string>
+    <string name="widget_placeholder">Open Mishkah once to fill this widget</string>
+</resources>

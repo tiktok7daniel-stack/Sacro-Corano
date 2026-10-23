@@ -1,0 +1,3 @@
+tags:
+  golden:
+    description: Pixel comparisons; rendered on Linux, so CI runs them on ubuntu.
