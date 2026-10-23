@@ -22,6 +22,7 @@ class HomeShell extends ConsumerStatefulWidget {
 
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
+  final Set<int> _visited = {0};
 
   static const _pages = <Widget>[
     HomeScreen(),
@@ -48,15 +49,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       child: Scaffold(
         body: Stack(
           children: [
-            AnimatedSwitcher(
-              duration: m.medium,
-              switchInCurve: Motion.emphasized,
-              transitionBuilder: (child, a) => FadeTransition(
-                opacity: a,
-                child: ScaleTransition(scale: Tween(begin: 0.985, end: 1.0).animate(a), child: child),
-              ),
-              child: KeyedSubtree(key: ValueKey(_index), child: _pages[_index]),
-            ),
+            // Tabs are built on first visit and then kept alive, so switching
+            // back is instant and keeps scroll position. Hidden tabs have
+            // their tickers muted.
+            for (var i = 0; i < _pages.length; i++)
+              if (_visited.contains(i))
+                Offstage(
+                  offstage: i != _index,
+                  child: TickerMode(
+                    enabled: i == _index,
+                    child: AnimatedOpacity(
+                      opacity: i == _index ? 1 : 0,
+                      duration: m.short,
+                      child: _pages[i],
+                    ),
+                  ),
+                ),
             const PositionedDirectional(start: 0, end: 0, bottom: 0, child: MiniPlayer()),
           ],
         ),
@@ -64,7 +72,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           selectedIndex: _index,
           onDestinationSelected: (i) {
             haptic(ref, HapticKind.selection);
-            setState(() => _index = i);
+            setState(() {
+              _index = i;
+              _visited.add(i);
+            });
           },
           destinations: [
             NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: context.tr('nav_home')),

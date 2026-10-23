@@ -7,6 +7,7 @@ import 'package:just_audio_platform_interface/just_audio_platform_interface.dart
 import 'package:mishkah/app/providers.dart';
 import 'package:mishkah/core/widgets/common.dart';
 import 'package:mishkah/data/hadith_repository.dart';
+import 'package:mishkah/data/video_repository.dart';
 import 'package:mishkah/domain/quran_models.dart';
 import 'package:mishkah/features/azkar/azkar_screen.dart';
 import 'package:mishkah/features/favorites/favorites_screen.dart';
@@ -249,10 +250,59 @@ void main() {
     expect(find.byType(VerseJourneyScreen), findsOneWidget);
   });
 
-  testWidgets('videos list curated topics', (tester) async {
-    await pumpScreen(tester, const VideosScreen(), env);
-    expect(find.text('تلاوات خاشعة'), findsOneWidget);
-    expect(videoTopics.length, 8);
+  List<VideoItem> fakeVideos(String id) => [
+        for (var i = 0; i < 4; i++) VideoItem(title: '$id clip $i', channel: 'channel $i', thumb: '', youtubeId: '$id$i'),
+      ];
+
+  testWidgets('videos screen shows shelves and a full section', (tester) async {
+    await pumpScreen(
+      tester,
+      const VideosScreen(),
+      env,
+      overrides: [
+        videoSectionProvider.overrideWith((ref, id) async {
+          if (id == 'tafsir') throw StateError('offline');
+          return fakeVideos(id);
+        }),
+      ],
+    );
+    await tester.pump();
+    expect(find.text('مقتطفات دينية'), findsOneWidget);
+    expect(find.text('القرآن'), findsOneWidget);
+    expect(find.text('quran clip 0'), findsOneWidget);
+    expect(find.text('تفسير وتدبّر'), findsNothing, reason: 'failed shelves are hidden');
+    await tester.tap(find.textContaining('عرض الكل').first);
+    await tester.pumpAndSettle();
+    expect(find.byType(SectionVideosScreen), findsOneWidget);
+    expect(find.byType(VideoCard), findsAtLeastNWidgets(3));
+  });
+
+  testWidgets('home videos card features the first clip', (tester) async {
+    await pumpScreen(
+      tester,
+      const Scaffold(body: SingleChildScrollView(child: VideosHomeCard())),
+      env,
+      overrides: [videoSectionProvider.overrideWith((ref, id) async => fakeVideos(id))],
+    );
+    await tester.pump();
+    expect(find.text('المرئيات'), findsOneWidget);
+    expect(find.text('شاهد الآن'), findsOneWidget);
+    expect(find.text('quran clip 0'), findsOneWidget);
+    expect(find.byType(VideoCard), findsNWidgets(3));
+    await tester.tap(find.text('عرض الكل'));
+    await tester.pumpAndSettle();
+    expect(find.byType(VideosScreen), findsOneWidget);
+  });
+
+  testWidgets('home videos card hides itself offline', (tester) async {
+    await pumpScreen(
+      tester,
+      const Scaffold(body: VideosHomeCard()),
+      env,
+      overrides: [videoSectionProvider.overrideWith((ref, id) async => throw StateError('offline'))],
+    );
+    await tester.pump();
+    expect(find.text('المرئيات'), findsNothing);
   });
 
   testWidgets('radio lists, filters and plays a station', (tester) async {

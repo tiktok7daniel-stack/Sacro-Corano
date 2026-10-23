@@ -56,7 +56,7 @@ class GradientTile extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd, colors: colors),
-        boxShadow: [BoxShadow(color: colors.first.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: colors.first.withValues(alpha: 0.28), blurRadius: 10, offset: const Offset(0, 5))],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(

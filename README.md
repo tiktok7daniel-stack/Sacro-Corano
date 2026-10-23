@@ -106,8 +106,9 @@ that were considered and the brand guidelines.
   al-Muyassar.
 - **Audio tafsir**: Tafsir al-Muyassar read aloud verse by verse by the
   device's Arabic voice (offline when the voice is installed).
-- **Live Quran radio** (MP3Quran.net) and curated **videos** that open in
-  YouTube.
+- **Live Quran radio** (MP3Quran.net) and **religious clips**: shelves of
+  recitations, reminders, ibtihalat and tafsir that play inside the app
+  (YouTube's official embedded player, plus MP3Quran video recitations).
 - **Hijri calendar** with occasions, the white days and Monday/Thursday fasts;
   a **month table** of prayer times.
 - **Sadaqa jariya**: log deeds dedicated to loved ones and share the app.

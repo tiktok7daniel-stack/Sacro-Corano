@@ -23,6 +23,20 @@ String formatCountdown(BuildContext context, Duration d) {
   return context.num('$h:$m:$s');
 }
 
+/// Live hh:mm:ss to [target]; the only widget that rebuilds every second.
+class CountdownText extends ConsumerWidget {
+  const CountdownText({super.key, required this.target, this.style});
+  final DateTime target;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref.watch(clockProvider).value ?? DateTime.now();
+    final d = target.difference(now);
+    return Text(formatCountdown(context, d.isNegative ? Duration.zero : d), style: style);
+  }
+}
+
 /// Home card: next prayer with a live countdown and the day's timeline.
 class PrayerCard extends ConsumerWidget {
   const PrayerCard({super.key});
@@ -32,10 +46,9 @@ class PrayerCard extends ConsumerWidget {
     final calc = ref.watch(prayerCalculatorProvider);
     final s = ref.watch(settingsProvider);
     if (calc == null) return const _NoLocationCard();
-    final now = ref.watch(clockProvider).value ?? DateTime.now();
+    final now = ref.watch(minuteProvider);
     final today = calc.forDate(now);
     final (next, at) = calc.next(now);
-    final remaining = at.difference(now);
     final t = Theme.of(context).textTheme;
 
     return Pressable(
@@ -62,22 +75,34 @@ class PrayerCard extends ConsumerWidget {
             ]),
             const SizedBox(height: 6),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(context.tr('prayer_${next.name}'), style: t.headlineLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
-              const Spacer(),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(context.tr('prayer_${next.name}'), style: t.headlineLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(width: 8),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text(context.tr('remaining'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                Text(formatCountdown(context, remaining),
-                    style: t.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700, fontFeatures: const [FontFeature.tabularFigures()])),
+                CountdownText(
+                  target: at,
+                  style: t.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700, fontFeatures: const [FontFeature.tabularFigures()]),
+                ),
               ]),
             ]),
             const SizedBox(height: 10),
             Divider(color: Colors.white.withValues(alpha: 0.25), height: 1),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 for (final p in PrayerName.values.where((p) => p.isFard))
-                  _TimeDot(name: context.tr('prayer_${p.name}'), time: formatTime(context, today[p]), active: p == next, past: today[p].isBefore(now)),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: _TimeDot(name: context.tr('prayer_${p.name}'), time: formatTime(context, today[p]), active: p == next, past: today[p].isBefore(now)),
+                    ),
+                  ),
               ],
             ),
           ]),

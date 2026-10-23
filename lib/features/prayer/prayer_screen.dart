@@ -33,7 +33,7 @@ class _PrayerScreenState extends ConsumerState<PrayerScreen> {
   Widget build(BuildContext context) {
     final calc = ref.watch(prayerCalculatorProvider);
     final s = ref.watch(settingsProvider);
-    final now = ref.watch(clockProvider).value ?? DateTime.now();
+    final now = ref.watch(minuteProvider);
     final day = DateTime(now.year, now.month, now.day).add(Duration(days: _dayOffset));
     final hijri = HijriDate.fromGregorian(day, offsetDays: s.hijriOffset);
     final log = ref.watch(activityProvider)[dayKey(day)];
@@ -153,8 +153,8 @@ class _PrayerScreenState extends ConsumerState<PrayerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(context.tr('remaining'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                      Text(
-                        formatCountdown(context, nextAt.difference(now)),
+                      CountdownText(
+                        target: nextAt,
                         style: const TextStyle(color: Brand.gold, fontSize: 26, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()]),
                       ),
                     ],

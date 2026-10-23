@@ -138,6 +138,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.add_circle_outline).first);
     await tester.pump();
     expect(c.read(settingsProvider).prayerOffsets['fajr'], 1);
+    // Let the coalesced notification reschedule run.
+    await tester.pump(const Duration(seconds: 1));
   });
 
   testWidgets('reflections list, map and share entry', (tester) async {

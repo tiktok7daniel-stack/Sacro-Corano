@@ -43,7 +43,14 @@ void main() {
 
     setUp(() async {
       AndroidFlutterLocalNotificationsPlugin.registerWith();
-      rec = ChannelRecorder('dexterous.com/flutter/local_notifications', reply: (c) => c.method == 'initialize' ? true : null);
+      rec = ChannelRecorder('dexterous.com/flutter/local_notifications', reply: (c) => switch (c.method) {
+            'initialize' => true,
+            'pendingNotificationRequests' => [
+                {'id': 1000, 'title': 'old', 'body': '', 'payload': null},
+                {'id': 42, 'title': 'other', 'body': '', 'payload': null},
+              ],
+            _ => null,
+          });
       await Notifications.instance.initTimezones();
     });
     tearDown(() => rec.dispose());
@@ -55,7 +62,8 @@ void main() {
       // 4 prayers × 7 days, minus those already past today.
       expect(scheduled.length, inInclusiveRange(4 * 6, 4 * 7));
       expect(scheduled.any((c) => (c.arguments as Map)['title'] == 'asr'), isFalse);
-      expect(rec.named('cancel'), isNotEmpty, reason: 'old alerts are cleared first');
+      final cancelled = rec.named('cancel').map((c) => (c.arguments as Map)['id']).toList();
+      expect(cancelled, [1000], reason: 'only pending alerts in the prayer range are cleared');
     });
 
     test('pre-adhan reminders double the alerts', () async {

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -27,7 +30,7 @@ abstract final class Bootstrap {
       }
       if (!context.mounted) return;
     }
-    await reschedule(context, ref);
+    await reschedule(context, ref, onlyIfChanged: true);
   }
 
   /// Travel mode: if the device moved more than 50 km from the saved place,
@@ -55,22 +58,59 @@ abstract final class Bootstrap {
     ));
   }
 
+  static Timer? _debounce;
+
+  /// What the schedule depends on; when it is unchanged (same day, same
+  /// settings and language) a launch skips the ~100 platform calls.
+  static String scheduleSignature(AppSettings s, String lang, DateTime now) => jsonEncode([
+        '${now.year}-${now.month}-${now.day}',
+        lang,
+        s.lat,
+        s.lng,
+        s.calcMethod,
+        s.madhab,
+        s.highLatRule,
+        s.prayerOffsets,
+        s.adhanEnabled,
+        s.preAdhanMinutes,
+        s.azkarReminders,
+        s.wirdReminderHour,
+      ]);
+
   /// Re-schedules notifications and refreshes the home-screen widget.
-  static Future<void> reschedule(BuildContext context, WidgetRef ref) async {
+  /// Rapid changes (toggling several bells) are coalesced into one run.
+  static Future<void> reschedule(BuildContext context, WidgetRef ref, {bool onlyIfChanged = false}) {
     final s = ref.read(settingsProvider);
+    final lang = context.lang;
+    final storage = ref.read(storageProvider);
+    final sig = scheduleSignature(s, lang, DateTime.now());
+    if (onlyIfChanged && storage.read<String>('scheduleSig') == sig) return Future.value();
     final titles = {for (final p in PrayerName.values) p: context.tr('adhan_title_${p.name}')};
     final body = context.tr('adhan_body');
     final morning = context.tr('reminder_morning');
     final evening = context.tr('reminder_evening');
     final wird = context.tr('reminder_wird');
-    final lang = context.lang;
-    try {
-      await Notifications.instance.schedulePrayers(s, titles: titles, body: body);
-      await Notifications.instance.scheduleReminders(s, morning: morning, evening: evening, wird: wird);
-    } catch (e) {
-      debugPrint('Scheduling failed: $e');
+    Future<void> run() async {
+      try {
+        await Notifications.instance.schedulePrayers(s, titles: titles, body: body);
+        await Notifications.instance.scheduleReminders(s, morning: morning, evening: evening, wird: wird);
+        await storage.write('scheduleSig', sig);
+      } catch (e) {
+        debugPrint('Scheduling failed: $e');
+      }
+      try {
+        await HomeWidgetSync.update(ref, s, lang);
+      } catch (e) {
+        // The calling widget may be gone after the debounce delay.
+        debugPrint('Widget refresh skipped: $e');
+      }
     }
-    await HomeWidgetSync.update(ref, s, lang);
+
+    if (onlyIfChanged) return run();
+    final done = Completer<void>();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () => run().whenComplete(done.complete));
+    return done.future;
   }
 }
 

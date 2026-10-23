@@ -188,6 +188,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
+    // Let the coalesced notification reschedule run.
+    await tester.pump(const Duration(seconds: 1));
   });
 
   testWidgets('logo painter animates without errors', (tester) async {

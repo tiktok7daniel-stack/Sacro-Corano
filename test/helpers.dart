@@ -81,7 +81,7 @@ Future<TestEnv> createEnv({AppSettings? settings}) async {
 }
 
 /// Pumps [child] inside the app's theme, RTL locale and test providers.
-Future<void> pumpScreen(WidgetTester tester, Widget child, TestEnv env, {String lang = 'ar', DateTime? now}) async {
+Future<void> pumpScreen(WidgetTester tester, Widget child, TestEnv env, {String lang = 'ar', DateTime? now, List overrides = const []}) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -94,6 +94,7 @@ Future<void> pumpScreen(WidgetTester tester, Widget child, TestEnv env, {String 
       contentRepoProvider.overrideWithValue(ContentRepository(bundle: FileBundle())),
       clockProvider.overrideWith((ref) => Stream.value(clock)),
       searchEngineProvider.overrideWith((ref) async => testSearchEngine()),
+      ...overrides.cast(),
     ],
     child: Consumer(
       builder: (context, ref, _) {

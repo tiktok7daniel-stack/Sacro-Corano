@@ -166,7 +166,12 @@ class HomeScreen extends ConsumerWidget {
               colors: Brand.gStats,
               onTap: () => push(context, const HadithScreen()),
             ),
-            GradientTile(label: context.tr('videos'), icon: Icons.smart_display_rounded, colors: Brand.gDua, onTap: () => push(context, const VideosScreen())),
+            GradientTile(
+              label: context.tr('videos'),
+              icon: Icons.play_circle_rounded,
+              colors: const [Color(0xFFD32F2F), Color(0xFFEF7A7A)],
+              onTap: () => push(context, const VideosScreen()),
+            ),
             GradientTile(
               label: context.tr('mood_verses'),
               icon: Icons.spa_rounded,
@@ -174,6 +179,7 @@ class HomeScreen extends ConsumerWidget {
               onTap: () => push(context, const MoodScreen()),
             ),
           ]),
+          box(const VideosHomeCard()),
           SliverToBoxAdapter(child: SectionHeader(context.tr('section_reflect'))),
           _grid([
             GradientTile(

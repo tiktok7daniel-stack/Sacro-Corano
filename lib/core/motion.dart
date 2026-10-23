@@ -82,7 +82,7 @@ class FadeSlideIn extends StatefulWidget {
   /// Convenience for list items: delay grows with [index], capped.
   factory FadeSlideIn.indexed(int index, {Key? key, required Widget child}) => FadeSlideIn(
         key: key,
-        delay: Duration(milliseconds: 40 * (index.clamp(0, 10))),
+        delay: Duration(milliseconds: 30 * (index.clamp(0, 8))),
         child: child,
       );
 
@@ -91,36 +91,48 @@ class FadeSlideIn extends StatefulWidget {
 }
 
 class _FadeSlideInState extends State<FadeSlideIn> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 520));
-  late final Animation<double> _a = CurvedAnimation(parent: _c, curve: Motion.emphasized);
+  AnimationController? _c;
+  Animation<double>? _opacity;
+  Animation<Offset>? _slide;
+  bool _decided = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (Motion.of(context).reduced) {
-      _c.value = 1;
-    } else if (!_c.isAnimating && _c.value == 0) {
+    if (_decided) return;
+    _decided = true;
+    // Only the first screenful animates. Items that scroll into view later
+    // (and items rebuilt by lazy lists) appear at once: replaying the
+    // entrance on every scroll costs frames and looks restless.
+    final position = Scrollable.maybeOf(context)?.position;
+    final scrolled = position != null && position.hasPixels && position.pixels > 0;
+    if (Motion.of(context).reduced || scrolled) return;
+    final c = _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+    final curved = CurvedAnimation(parent: c, curve: Motion.emphasized);
+    _opacity = curved;
+    _slide = Tween(begin: Offset(0, widget.offset / 400), end: Offset.zero).animate(curved);
+    if (widget.delay == Duration.zero) {
+      c.forward();
+    } else {
       Future.delayed(widget.delay, () {
-        if (mounted) _c.forward();
+        if (mounted) c.forward();
       });
     }
   }
 
   @override
   void dispose() {
-    _c.dispose();
+    _c?.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-        animation: _a,
-        child: widget.child,
-        builder: (_, child) => Opacity(
-          opacity: _a.value,
-          child: Transform.translate(offset: Offset(0, (1 - _a.value) * widget.offset), child: child),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final o = _opacity;
+    if (o == null) return widget.child;
+    // Transitions run on the compositor: no rebuild of the child per frame.
+    return FadeTransition(opacity: o, child: SlideTransition(position: _slide!, child: widget.child));
+  }
 }
 
 /// Scales down slightly while pressed and fires a haptic on tap.

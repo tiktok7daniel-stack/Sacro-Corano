@@ -48,6 +48,16 @@ final clockProvider = StreamProvider<DateTime>((ref) async* {
   yield* Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now());
 });
 
+/// The clock truncated to the minute: screens that only show times rebuild
+/// once a minute; only countdown text listens to [clockProvider].
+final minuteProvider = Provider<DateTime>((ref) {
+  final t = ref.watch(clockProvider.select((v) {
+    final n = v.value ?? DateTime.now();
+    return DateTime(n.year, n.month, n.day, n.hour, n.minute);
+  }));
+  return t;
+});
+
 // ---------------------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------------------

@@ -61,6 +61,15 @@ class Notifications {
     return granted;
   }
 
+  /// Cancels only the pending ids in [base, base + count): one query
+  /// instead of a platform call per possible id.
+  Future<void> _cancelRange(int base, int count) async {
+    final pending = await _plugin.pendingNotificationRequests();
+    for (final r in pending) {
+      if (r.id >= base && r.id < base + count) await _plugin.cancel(id: r.id);
+    }
+  }
+
   static const _prayerIdBase = 1000;
   static const _reminderIdBase = 5000;
 
@@ -68,9 +77,7 @@ class Notifications {
   /// whenever settings change and when the location changes (travel mode).
   Future<void> schedulePrayers(AppSettings s, {int days = 7, required Map<PrayerName, String> titles, required String body}) async {
     await _init();
-    for (var i = 0; i < days * 6 * 2; i++) {
-      await _plugin.cancel(id: _prayerIdBase + i);
-    }
+    await _cancelRange(_prayerIdBase, days * 6 * 2);
     if (!s.hasLocation) return;
     final calc = PrayerCalculator(s);
     final now = DateTime.now();
@@ -94,9 +101,7 @@ class Notifications {
   /// Morning / evening azkar after Fajr and Asr, plus the daily wird.
   Future<void> scheduleReminders(AppSettings s, {required String morning, required String evening, required String wird}) async {
     await _init();
-    for (var i = 0; i < 30; i++) {
-      await _plugin.cancel(id: _reminderIdBase + i);
-    }
+    await _cancelRange(_reminderIdBase, 30);
     final now = DateTime.now();
     var id = _reminderIdBase;
     if (s.azkarReminders && s.hasLocation) {

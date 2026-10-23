@@ -14,6 +14,7 @@ import 'package:mishkah/data/azkar_repository.dart';
 import 'package:mishkah/data/hadith_repository.dart';
 import 'package:mishkah/data/local/storage.dart';
 import 'package:mishkah/data/quran/content_repository.dart';
+import 'package:mishkah/data/video_repository.dart';
 import 'package:mishkah/domain/occasions.dart';
 import 'package:mishkah/domain/quran_models.dart';
 import 'package:mishkah/domain/sira.dart';
@@ -239,6 +240,137 @@ void main() {
       await c.read(tafsirReaderProvider.notifier).start(1);
       expect(c.read(tafsirReaderProvider).unavailable, isTrue);
       expect(spoken, isEmpty);
+    });
+  });
+
+  group('videos', () {
+    String page(Object data) => '<html><script>var ytInitialData = ${jsonEncode(data)};</script></html>';
+
+    test('parses classic and lockup search results', () {
+      final html = page({
+        'contents': [
+          {
+            'videoRenderer': {
+              'videoId': 'abc',
+              'title': {
+                'runs': [
+                  {'text': 'تلاوة '},
+                  {'text': 'خاشعة'},
+                ],
+              },
+              'ownerText': {
+                'runs': [
+                  {'text': 'قناة'},
+                ],
+              },
+            },
+          },
+          {
+            'videoRenderer': {'videoId': 'abc', 'title': {'simpleText': 'duplicate'}},
+          },
+          {
+            'lockupViewModel': {
+              'contentId': 'xyz',
+              'contentType': 'LOCKUP_CONTENT_TYPE_VIDEO',
+              'metadata': {
+                'lockupMetadataViewModel': {
+                  'title': {'content': 'درس'},
+                  'metadata': {
+                    'contentMetadataViewModel': {
+                      'metadataRows': [
+                        {
+                          'metadataParts': [
+                            {'text': {'content': 'شيخ'}},
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          {
+            'lockupViewModel': {'contentId': 'pl', 'contentType': 'LOCKUP_CONTENT_TYPE_PLAYLIST'},
+          },
+        ],
+      });
+      final list = parseYoutubeSearch(html);
+      expect(list.map((v) => v.youtubeId), ['abc', 'xyz']);
+      expect(list.first.title, 'تلاوة خاشعة');
+      expect(list.first.channel, 'قناة');
+      expect(list.first.thumb, 'https://i.ytimg.com/vi/abc/hqdefault.jpg');
+      expect(list.last.channel, 'شيخ');
+      expect(parseYoutubeSearch('<html>no data</html>'), isEmpty);
+      expect(parseYoutubeSearch('ytInitialData = {broken;</script>'), isEmpty);
+    });
+
+    test('parses MP3Quran video recitations', () {
+      final list = parseMp3QuranVideos(jsonEncode({
+        'videos': [
+          {
+            'id': 1,
+            'reciter_name': 'مشاري العفاسي ',
+            'videos': [
+              {'id': 9, 'video_url': 'https://cdn.example/v.mp4', 'video_thumb_url': 'https://cdn.example/v.jpg'},
+              {'id': 10, 'video_url': 'http://insecure/v.mp4'},
+            ],
+          },
+        ],
+      }));
+      expect(list.single.title, 'مشاري العفاسي');
+      expect(list.single.url, 'https://cdn.example/v.mp4');
+      expect(list.single.isYoutube, isFalse);
+      expect(VideoItem.fromJson(list.single.toJson()).thumb, 'https://cdn.example/v.jpg');
+    });
+
+    test('caches sections, refreshes after the ttl and falls back offline', () async {
+      var now = DateTime(2026, 10, 23, 12);
+      var calls = 0;
+      var online = true;
+      final repo = VideoRepository(
+        storage,
+        now: () => now,
+        client: MockClient((r) async {
+          calls++;
+          if (!online) throw const SocketException('offline');
+          return http.Response.bytes(
+            utf8.encode(page({
+              'videoRenderer': {'videoId': 'v$calls', 'title': {'simpleText': 'clip $calls'}},
+            })),
+            200,
+          );
+        }),
+      );
+      final s = videoSections.first;
+      expect((await repo.section(s)).single.youtubeId, 'v1');
+      expect((await repo.section(s)).single.youtubeId, 'v1', reason: 'served from cache');
+      expect(calls, 1);
+      now = now.add(const Duration(hours: 7));
+      expect((await repo.section(s)).single.youtubeId, 'v2');
+      online = false;
+      expect((await repo.section(s, refresh: true)).single.youtubeId, 'v2', reason: 'stale cache when offline');
+      await expectLater(repo.section(videoSections[1]), throwsA(anything));
+    });
+
+    test('MP3Quran section uses its API', () async {
+      final repo = VideoRepository(
+        storage,
+        client: MockClient((r) async {
+          expect(r.url.host, 'www.mp3quran.net');
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'videos': [
+                {'reciter_name': 'r', 'video_url': 'https://x/v.mp4'},
+              ],
+            })),
+            200,
+          );
+        }),
+      );
+      final list = await repo.section(videoSections.firstWhere((s) => s.mp3quran));
+      expect(list.single.url, 'https://x/v.mp4');
+      expect(videoSections.first.title('en'), 'Quran');
     });
   });
 }

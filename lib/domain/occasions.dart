@@ -45,6 +45,15 @@ List<Occasion> occasionsOn(DateTime date, {int offsetDays = 0}) {
 
 /// The next occasion starting after (or on) [from], with days until it.
 (Occasion, int) nextOccasion(DateTime from, {int offsetDays = 0, Set<String> only = const {}}) {
+  // Walking a year of dates is cheap but runs on every rebuild of the home
+  // cards; the answer only changes once a day.
+  final key = '${from.year}-${from.month}-${from.day}|$offsetDays|${(only.toList()..sort()).join(',')}';
+  return _nextCache[key] ??= _nextOccasion(from, offsetDays, only);
+}
+
+final _nextCache = <String, (Occasion, int)>{};
+
+(Occasion, int) _nextOccasion(DateTime from, int offsetDays, Set<String> only) {
   for (var i = 0; i < 400; i++) {
     final d = from.add(Duration(days: i));
     final h = HijriDate.fromGregorian(d, offsetDays: offsetDays);
