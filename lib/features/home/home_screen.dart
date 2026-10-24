@@ -14,6 +14,7 @@ import '../azkar/azkar_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../hadith/hadith_screen.dart';
 import '../hifz/hifz_screen.dart';
+import '../hifz/recitation_test_screen.dart';
 import '../khatma/khatma_screen.dart';
 import '../kids/kids_screen.dart';
 import '../mood/mood_screen.dart';
@@ -25,6 +26,7 @@ import '../prophets/prophets_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../quran/reader_screen.dart';
 import '../radio/radio_screen.dart';
+import '../ramadan/ramadan_screen.dart';
 import '../reciters/reciters_screen.dart';
 import '../sadaqa/sadaqa_screen.dart';
 import '../settings/settings_screen.dart';
@@ -95,6 +97,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           box(const PrayerCard()),
+          const SliverToBoxAdapter(child: _RamadanSlot()),
           box(const _QuickRow()),
           box(const WeekCard()),
           SliverToBoxAdapter(child: SectionHeader(context.tr('section_lights'))),
@@ -122,6 +125,9 @@ class HomeScreen extends ConsumerWidget {
               colors: Brand.gDua,
               onTap: () => push(context, const QuranicDuasScreen()),
             ),
+            GradientTile(label: context.tr('ramadan_fasting'), icon: Icons.nightlight_round, colors: Brand.gKhatma, onTap: () => push(context, const RamadanScreen())),
+            GradientTile(label: context.tr('my_day'), icon: Icons.task_alt_rounded, colors: Brand.gStats, onTap: () => push(context, const DailyChecklistScreen())),
+            GradientTile(label: context.tr('qibla'), icon: Icons.explore_rounded, colors: Brand.gQibla, onTap: () => push(context, const QiblaScreen())),
           ]),
           SliverToBoxAdapter(child: SectionHeader(context.tr('section_listen'))),
           _grid([
@@ -150,7 +156,12 @@ class HomeScreen extends ConsumerWidget {
               colors: Brand.gKhatma,
               onTap: () => push(context, const SadaqaScreen()),
             ),
-            GradientTile(label: context.tr('qibla'), icon: Icons.explore_rounded, colors: Brand.gQibla, onTap: () => push(context, const QiblaScreen())),
+            GradientTile(
+              label: context.tr('istikhara'),
+              icon: Icons.lightbulb_rounded,
+              colors: Brand.gReciters,
+              onTap: () => openAzkarCategory(context, ref, 'دعاء صلاة الاستخارة'),
+            ),
             GradientTile(
               label: context.tr('ruqya'),
               icon: Icons.shield_moon_rounded,
@@ -172,12 +183,7 @@ class HomeScreen extends ConsumerWidget {
               colors: const [Color(0xFFD32F2F), Color(0xFFEF7A7A)],
               onTap: () => push(context, const VideosScreen()),
             ),
-            GradientTile(
-              label: context.tr('mood_verses'),
-              icon: Icons.spa_rounded,
-              colors: Brand.gReciters.reversed.toList(),
-              onTap: () => push(context, const MoodScreen()),
-            ),
+            GradientTile(label: context.tr('favorites'), icon: Icons.favorite_rounded, colors: Brand.gDua, onTap: () => push(context, const FavoritesScreen())),
           ]),
           box(const VideosHomeCard()),
           SliverToBoxAdapter(child: SectionHeader(context.tr('section_reflect'))),
@@ -196,8 +202,16 @@ class HomeScreen extends ConsumerWidget {
               onTap: () => push(context, const ProphetsScreen()),
             ),
             GradientTile(label: context.tr('hifz'), icon: Icons.psychology_rounded, colors: Brand.gHifz, onTap: () => push(context, const HifzScreen())),
+            GradientTile(label: context.tr('test_recitation'), icon: Icons.mic_rounded, colors: const [Color(0xFFD84315), Color(0xFFFF8A65)], onTap: () => push(context, const RecitationPickerScreen())),
             GradientTile(label: context.tr('khatma'), icon: Icons.flag_rounded, colors: Brand.gKhatma, onTap: () => push(context, const KhatmaScreen())),
             GradientTile(label: context.tr('tadabbur'), icon: Icons.hub_rounded, colors: Brand.gStats, onTap: () => push(context, const TadabburScreen())),
+            GradientTile(
+              label: context.tr('mood_verses'),
+              icon: Icons.spa_rounded,
+              colors: Brand.gReciters.reversed.toList(),
+              onTap: () => push(context, const MoodScreen()),
+            ),
+            GradientTile(label: context.tr('stats'), icon: Icons.insights_rounded, colors: Brand.gStats.reversed.toList(), onTap: () => push(context, const StatsScreen())),
           ]),
           box(const HadithOfDayCard()),
           box(const OccasionCard()),
@@ -591,5 +605,18 @@ class OccasionCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Shows the Ramadan card above the quick row during Ramadan only.
+class _RamadanSlot extends ConsumerWidget {
+  const _RamadanSlot();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final offset = ref.watch(settingsProvider.select((s) => s.hijriOffset));
+    final now = ref.watch(minuteProvider);
+    if (HijriDate.fromGregorian(now, offsetDays: offset).month != 9) return const SizedBox.shrink();
+    return const Padding(padding: EdgeInsets.fromLTRB(20, 16, 20, 0), child: RamadanCard());
   }
 }

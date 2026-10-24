@@ -20,6 +20,8 @@ import '../audio/mini_player.dart';
 import 'ayah_actions.dart';
 import 'focus_listen_screen.dart';
 import 'reading_settings_sheet.dart';
+import 'widgets/tajweed_text.dart';
+import 'word_sheet.dart';
 
 /// The mushaf. Two modes share state and playback:
 ///  * verse mode – one verse per row, optional translation, auto-follows
@@ -295,6 +297,8 @@ class _VerseModeState extends ConsumerState<_VerseMode> {
     final palette = context.reading;
     final playing = ref.watch(audioProvider.select((p) => p.current));
     final translation = s.showTranslation ? ref.watch(translationProvider(s.translationId)).value : null;
+    final tajweed = s.tajweed ? ref.watch(tajweedProvider).value : null;
+    final colors = tajweedColors(dark: palette.page.computeLuminance() < 0.3);
 
     ref.listen<AyahRef?>(audioProvider.select((p) => p.current), (prev, next) {
       if (next != null && next.surah == widget.surah && next.ayah > 0 && _scroll.isAttached) {
@@ -338,14 +342,18 @@ class _VerseModeState extends ConsumerState<_VerseMode> {
           highlighted: isPlaying || isSelected,
           sajda: widget.quran.isSajda(widget.surah, i),
           rub: widget.quran.startsRub(widget.surah, i) && i > 1,
+          runs: tajweed?.runs(widget.surah, i) ?? const [],
+          classes: tajweed?.classes ?? const [],
+          colors: colors,
           onTap: () => widget.onAyahTap(ref0),
+          onWord: (w) => showWordSheet(context, ref0, word: w),
         );
       },
     );
   }
 }
 
-class _VerseTile extends StatelessWidget {
+class _VerseTile extends StatefulWidget {
   const _VerseTile({
     required this.refAyah,
     required this.text,
@@ -356,6 +364,10 @@ class _VerseTile extends StatelessWidget {
     required this.sajda,
     required this.rub,
     required this.onTap,
+    required this.onWord,
+    this.runs = const [],
+    this.classes = const [],
+    this.colors = const {},
   });
 
   final AyahRef refAyah;
@@ -367,16 +379,46 @@ class _VerseTile extends StatelessWidget {
   final bool sajda;
   final bool rub;
   final VoidCallback onTap;
+  final void Function(int word) onWord;
+  final List<int> runs;
+  final List<String> classes;
+  final Map<String, Color> colors;
+
+  @override
+  State<_VerseTile> createState() => _VerseTileState();
+}
+
+class _VerseTileState extends State<_VerseTile> {
+  final _recognizers = <GestureRecognizer>[];
+
+  void _clear() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  @override
+  void dispose() {
+    _clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = context.reading;
     final m = Motion.of(context);
+    final w = widget;
+    final refAyah = w.refAyah;
+    final text = w.text;
+    final translation = w.translation;
+    final highlighted = w.highlighted;
+    _clear();
     return Semantics(
       label: '${context.tr('ayah_n', {'n': refAyah.ayah})}. $text',
       button: true,
       child: InkWell(
-        onTap: onTap,
+        onTap: w.onTap,
         child: AnimatedContainer(
           duration: m.medium,
           curve: Curves.easeOut,
@@ -387,27 +429,35 @@ class _VerseTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            if (rub || sajda)
+            if (w.rub || w.sajda)
               Row(children: [
-                if (rub) Text('۞ ${context.tr('rub_start')}', style: TextStyle(color: p.marker, fontSize: 12)),
+                if (w.rub) Text('۞ ${context.tr('rub_start')}', style: TextStyle(color: p.marker, fontSize: 12)),
                 const Spacer(),
-                if (sajda) Text('۩ ${context.tr('sajda')}', style: TextStyle(color: p.marker, fontSize: 12)),
+                if (w.sajda) Text('۩ ${context.tr('sajda')}', style: TextStyle(color: p.marker, fontSize: 12)),
               ]),
             Text.rich(
               TextSpan(children: [
-                TextSpan(text: '${text.replaceAll('۞', '').trim()} '),
+                ...verseSpans(
+                  text,
+                  runs: w.runs,
+                  classes: w.classes,
+                  colors: w.colors,
+                  onWordLongPress: w.onWord,
+                  recognizers: _recognizers,
+                ),
+                const TextSpan(text: ' '),
                 TextSpan(text: ayahMarker(refAyah.ayah), style: TextStyle(color: p.marker)),
               ]),
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.justify,
-              style: TextStyle(fontFamily: Brand.quranFont, fontSize: fontSize, height: 2.1, color: p.ink),
+              style: TextStyle(fontFamily: Brand.quranFont, fontSize: w.fontSize, height: 2.1, color: p.ink),
             ),
             if (translation != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  translation!,
-                  textDirection: translationRtl ? TextDirection.rtl : TextDirection.ltr,
+                  translation,
+                  textDirection: w.translationRtl ? TextDirection.rtl : TextDirection.ltr,
                   style: TextStyle(fontSize: 15, height: 1.6, color: p.ink.withValues(alpha: 0.72)),
                 ),
               ),
@@ -620,6 +670,8 @@ class _MushafPageState extends ConsumerState<MushafPage> {
     final refs = q.ayahsOnPage(widget.page);
     final first = refs.first;
     final style = TextStyle(fontFamily: Brand.quranFont, fontSize: s.quranFontSize * 0.86, height: 2.05, color: p.ink);
+    final tajweed = s.tajweed ? ref.watch(tajweedProvider).value : null;
+    final colors = tajweedColors(dark: p.page.computeLuminance() < 0.3);
 
     final blocks = <Widget>[];
     var spans = <InlineSpan>[];
@@ -638,10 +690,19 @@ class _MushafPageState extends ConsumerState<MushafPage> {
       _recognizers.add(rec);
       final hl = r == playing || r == widget.selected;
       spans.add(TextSpan(
-        text: '${q.text(r.surah, r.ayah).replaceAll('۞', '۞ ')} ',
-        recognizer: rec,
         style: hl ? TextStyle(backgroundColor: p.highlight) : null,
-        semanticsLabel: '${context.tr('ayah_n', {'n': r.ayah})} ${q.text(r.surah, r.ayah)}',
+        children: [
+          // A label needs text of its own: a zero-width space carries it.
+          TextSpan(text: '\u200B', semanticsLabel: '${context.tr('ayah_n', {'n': r.ayah})} ${q.text(r.surah, r.ayah)}', recognizer: rec),
+          ...verseSpans(
+            q.text(r.surah, r.ayah),
+            runs: tajweed?.runs(r.surah, r.ayah) ?? const [],
+            classes: tajweed?.classes ?? const [],
+            colors: colors,
+            tap: rec,
+          ),
+          TextSpan(text: ' ', recognizer: rec),
+        ],
       ));
       spans.add(TextSpan(text: '${ayahMarker(r.ayah)} ', style: TextStyle(color: p.marker), recognizer: rec));
     }

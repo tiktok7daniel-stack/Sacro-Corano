@@ -3,12 +3,17 @@
 
     <!-- Streaming recitations and downloading tafsir / audio on demand. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Recitation test: the phone's speech recogniser listens to the reciter. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Prayer times and qibla. Coarse is enough; fine is requested only for precision when granted. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Adhan and reminder notifications at exact times, re-armed after reboot. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Prayer times are alarms the user set: granted at install on Android 13+,
+         so the adhan fires on the minute instead of being batched. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Background recitation with lock-screen controls. -->
@@ -63,6 +68,8 @@
 
         <!-- Scheduled notifications (flutter_local_notifications). -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <!-- Handles the "stop adhan" action button on the prayer notification. -->
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
@@ -93,6 +100,10 @@
         <intent>
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="https"/>
+        </intent>
+        <!-- Speech recognition for the recitation test (speech_to_text) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
         <!-- Device text-to-speech for the audio tafsir (flutter_tts) -->
         <intent>

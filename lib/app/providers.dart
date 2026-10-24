@@ -9,6 +9,7 @@ import '../data/hadith_repository.dart';
 import '../data/local/storage.dart';
 import '../data/quran/content_repository.dart';
 import '../data/quran/quran_data.dart';
+import '../data/quran/word_data.dart';
 import '../domain/khatma.dart';
 import '../domain/prayer_times.dart';
 import '../domain/quran_models.dart';
@@ -29,6 +30,10 @@ final quranProvider = FutureProvider<QuranData>((ref) => QuranData.load());
 final contentRepoProvider = Provider<ContentRepository>((ref) => ContentRepository());
 
 final azkarProvider = FutureProvider<AzkarData>((ref) => AzkarData.load());
+
+final tajweedProvider = FutureProvider<TajweedData>((ref) => TajweedData.load());
+
+final wordByWordProvider = FutureProvider<WordByWord>((ref) => WordByWord.load());
 
 final translationProvider = FutureProvider.family<Translation, String>((ref, id) => ref.watch(contentRepoProvider).translation(id));
 
@@ -239,6 +244,37 @@ class KhatmaController extends Notifier<KhatmaPlan?> {
 }
 
 final khatmaProvider = NotifierProvider<KhatmaController, KhatmaPlan?>(KhatmaController.new);
+
+class FastingController extends Notifier<FastingLog> {
+  @override
+  FastingLog build() => FastingLog.fromJson(ref.read(storageProvider).readMap('fasting'));
+
+  void _save(FastingLog f) {
+    state = f;
+    ref.read(storageProvider).write('fasting', f.toJson());
+  }
+
+  /// Cycles a day: none → fasted → missed → excused → none.
+  void cycle(DateTime day) {
+    const order = [null, 'fasted', 'missed', 'excused'];
+    final k = dayKey(day);
+    final next = order[(order.indexOf(state.days[k]) + 1) % order.length];
+    final m = Map<String, String>.from(state.days);
+    next == null ? m.remove(k) : m[k] = next;
+    _save(state.copyWith(days: m));
+  }
+
+  void set(DateTime day, String? status) {
+    final m = Map<String, String>.from(state.days);
+    status == null ? m.remove(dayKey(day)) : m[dayKey(day)] = status;
+    _save(state.copyWith(days: m));
+  }
+
+  void addOwed(int delta) => _save(state.copyWith(extraOwed: (state.extraOwed + delta).clamp(0, 10000)));
+  void addQadaDone(int delta) => _save(state.copyWith(qadaDone: (state.qadaDone + delta).clamp(0, 10000)));
+}
+
+final fastingProvider = NotifierProvider<FastingController, FastingLog>(FastingController.new);
 
 class HifzController extends _ListStore<HifzCard> {
   @override

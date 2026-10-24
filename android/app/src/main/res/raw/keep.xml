@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The adhan sounds are referenced only by name from notification channels. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/mishkah_adhan_full,@raw/mishkah_adhan_short" />

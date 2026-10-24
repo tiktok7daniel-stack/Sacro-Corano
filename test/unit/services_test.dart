@@ -57,7 +57,7 @@ void main() {
 
     test('schedules five adhans a day for a week, skipping disabled prayers', () async {
       const s = AppSettings(lat: 45.46, lng: 9.19, adhanEnabled: {'fajr': true, 'dhuhr': true, 'asr': false, 'maghrib': true, 'isha': true});
-      await Notifications.instance.schedulePrayers(s, titles: titles, body: 'b');
+      await Notifications.instance.schedulePrayers(s, titles: titles, body: 'b', days: 7);
       final scheduled = rec.named('zonedSchedule').toList();
       // 4 prayers × 7 days, minus those already past today.
       expect(scheduled.length, inInclusiveRange(4 * 6, 4 * 7));

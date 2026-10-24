@@ -75,6 +75,15 @@ abstract final class Bootstrap {
         s.preAdhanMinutes,
         s.azkarReminders,
         s.wirdReminderHour,
+        s.adhanSound,
+        s.iqamaAlert,
+        s.iqamaMinutes,
+        s.ramadanReminders,
+        s.kahfReminder,
+        s.salawatReminder,
+        s.whiteDaysReminder,
+        s.monThuReminder,
+        s.occasionFastReminder,
       ]);
 
   /// Re-schedules notifications and refreshes the home-screen widget.
@@ -90,10 +99,22 @@ abstract final class Bootstrap {
     final morning = context.tr('reminder_morning');
     final evening = context.tr('reminder_evening');
     final wird = context.tr('reminder_wird');
+    final iqama = context.tr('reminder_iqama');
+    final smart = SmartTexts(
+      kahf: context.tr('reminder_kahf'),
+      salawat: context.tr('reminder_salawat'),
+      whiteDays: context.tr('reminder_white_days'),
+      monThu: context.tr('reminder_mon_thu'),
+      arafah: context.tr('reminder_arafah'),
+      ashura: context.tr('reminder_ashura'),
+      suhoor: context.tr('reminder_suhoor'),
+      iftar: context.tr('reminder_iftar'),
+    );
     Future<void> run() async {
       try {
-        await Notifications.instance.schedulePrayers(s, titles: titles, body: body);
+        await Notifications.instance.schedulePrayers(s, titles: titles, body: body, iqama: iqama);
         await Notifications.instance.scheduleReminders(s, morning: morning, evening: evening, wird: wird);
+        await Notifications.instance.scheduleSmart(s, smart);
         await storage.write('scheduleSig', sig);
       } catch (e) {
         debugPrint('Scheduling failed: $e');

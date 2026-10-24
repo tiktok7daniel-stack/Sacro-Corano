@@ -136,3 +136,31 @@ class Dedication {
     created: DateTime.parse(j['t'] as String),
   );
 }
+
+/// Fasting log: Ramadan days (and any other day) marked as fasted, missed
+/// or excused, plus make-up (qada) fasts owed and done.
+@immutable
+class FastingLog {
+  const FastingLog({this.days = const {}, this.extraOwed = 0, this.qadaDone = 0});
+
+  /// dayKey → 'fasted' | 'missed' | 'excused'.
+  final Map<String, String> days;
+
+  /// Make-up fasts owed from earlier years, entered by hand.
+  final int extraOwed;
+  final int qadaDone;
+
+  int get missedCount => days.values.where((v) => v == 'missed' || v == 'excused').length;
+  int get fastedCount => days.values.where((v) => v == 'fasted').length;
+  int get qadaRemaining => (missedCount + extraOwed - qadaDone).clamp(0, 100000);
+
+  FastingLog copyWith({Map<String, String>? days, int? extraOwed, int? qadaDone}) =>
+      FastingLog(days: days ?? this.days, extraOwed: extraOwed ?? this.extraOwed, qadaDone: qadaDone ?? this.qadaDone);
+
+  Map<String, dynamic> toJson() => {'d': days, 'o': extraOwed, 'q': qadaDone};
+  factory FastingLog.fromJson(Map<String, dynamic> j) => FastingLog(
+        days: (j['d'] is Map) ? (j['d'] as Map).map((k, v) => MapEntry(k.toString(), v.toString())) : const {},
+        extraOwed: (j['o'] as num?)?.toInt() ?? 0,
+        qadaDone: (j['q'] as num?)?.toInt() ?? 0,
+      );
+}

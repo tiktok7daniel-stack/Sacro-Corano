@@ -35,6 +35,16 @@ class AppSettings {
     this.tasbihGoal = 100,
     this.kidsPin,
     this.onboarded = false,
+    this.tajweed = true,
+    this.adhanSound = 'full',
+    this.iqamaAlert = false,
+    this.iqamaMinutes = 15,
+    this.ramadanReminders = true,
+    this.kahfReminder = true,
+    this.salawatReminder = true,
+    this.whiteDaysReminder = true,
+    this.monThuReminder = false,
+    this.occasionFastReminder = true,
   });
 
   final AppThemeKind theme;
@@ -65,6 +75,18 @@ class AppSettings {
   final int tasbihGoal;
   final String? kidsPin;
   final bool onboarded;
+
+  /// Colour-coded tajweed in the reader.
+  final bool tajweed;
+  final String adhanSound;
+  final bool iqamaAlert;
+  final int iqamaMinutes;
+  final bool ramadanReminders;
+  final bool kahfReminder;
+  final bool salawatReminder;
+  final bool whiteDaysReminder;
+  final bool monThuReminder;
+  final bool occasionFastReminder;
 
   bool get hasLocation => lat != null && lng != null;
 
@@ -98,6 +120,16 @@ class AppSettings {
     String? kidsPin,
     bool clearKidsPin = false,
     bool? onboarded,
+    bool? tajweed,
+    String? adhanSound,
+    bool? iqamaAlert,
+    int? iqamaMinutes,
+    bool? ramadanReminders,
+    bool? kahfReminder,
+    bool? salawatReminder,
+    bool? whiteDaysReminder,
+    bool? monThuReminder,
+    bool? occasionFastReminder,
   }) =>
       AppSettings(
         theme: theme ?? this.theme,
@@ -128,6 +160,16 @@ class AppSettings {
         tasbihGoal: tasbihGoal ?? this.tasbihGoal,
         kidsPin: clearKidsPin ? null : (kidsPin ?? this.kidsPin),
         onboarded: onboarded ?? this.onboarded,
+        tajweed: tajweed ?? this.tajweed,
+        adhanSound: adhanSound ?? this.adhanSound,
+        iqamaAlert: iqamaAlert ?? this.iqamaAlert,
+        iqamaMinutes: iqamaMinutes ?? this.iqamaMinutes,
+        ramadanReminders: ramadanReminders ?? this.ramadanReminders,
+        kahfReminder: kahfReminder ?? this.kahfReminder,
+        salawatReminder: salawatReminder ?? this.salawatReminder,
+        whiteDaysReminder: whiteDaysReminder ?? this.whiteDaysReminder,
+        monThuReminder: monThuReminder ?? this.monThuReminder,
+        occasionFastReminder: occasionFastReminder ?? this.occasionFastReminder,
       );
 
   Map<String, dynamic> toJson() => {
@@ -159,6 +201,16 @@ class AppSettings {
         'tasbihGoal': tasbihGoal,
         'kidsPin': kidsPin,
         'onboarded': onboarded,
+        'tajweed': tajweed,
+        'adhanSound': adhanSound,
+        'iqamaAlert': iqamaAlert,
+        'iqamaMinutes': iqamaMinutes,
+        'ramadanReminders': ramadanReminders,
+        'kahfReminder': kahfReminder,
+        'salawatReminder': salawatReminder,
+        'whiteDaysReminder': whiteDaysReminder,
+        'monThuReminder': monThuReminder,
+        'occasionFastReminder': occasionFastReminder,
       };
 
   factory AppSettings.fromJson(Map<String, dynamic> j) {
@@ -209,6 +261,16 @@ class AppSettings {
       tasbihGoal: pick('tasbihGoal', d.tasbihGoal),
       kidsPin: text('kidsPin'),
       onboarded: pick('onboarded', d.onboarded),
+      tajweed: pick('tajweed', d.tajweed),
+      adhanSound: pick('adhanSound', d.adhanSound),
+      iqamaAlert: pick('iqamaAlert', d.iqamaAlert),
+      iqamaMinutes: pick('iqamaMinutes', d.iqamaMinutes),
+      ramadanReminders: pick('ramadanReminders', d.ramadanReminders),
+      kahfReminder: pick('kahfReminder', d.kahfReminder),
+      salawatReminder: pick('salawatReminder', d.salawatReminder),
+      whiteDaysReminder: pick('whiteDaysReminder', d.whiteDaysReminder),
+      monThuReminder: pick('monThuReminder', d.monThuReminder),
+      occasionFastReminder: pick('occasionFastReminder', d.occasionFastReminder),
     );
   }
 }

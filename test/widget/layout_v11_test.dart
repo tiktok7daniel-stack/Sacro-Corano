@@ -55,7 +55,10 @@ void main() {
     final counter = find.descendant(of: find.byType(TipsCard), matching: find.textContaining('/'));
     await tester.scrollUntilVisible(counter, 300, scrollable: scrollable());
     final before = tester.widget<Text>(counter).data;
-    await tester.tap(find.descendant(of: find.byType(TipsCard), matching: find.byType(IconButton)));
+    final next = find.descendant(of: find.byType(TipsCard), matching: find.byType(IconButton));
+    await tester.ensureVisible(next);
+    await tester.pump();
+    await tester.tap(next);
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.widget<Text>(counter).data, isNot(before));
     // A very tall window lays every section out at once.

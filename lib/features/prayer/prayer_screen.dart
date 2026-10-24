@@ -10,6 +10,7 @@ import '../../core/utils/hijri.dart';
 import '../../core/widgets/common.dart';
 import '../../domain/khatma.dart';
 import '../../domain/prayer_times.dart';
+import '../../domain/settings.dart';
 import '../../services/location.dart';
 import '../../services/notifications.dart';
 import '../mosque/mosque_mode_screen.dart';
@@ -463,6 +464,61 @@ class PrayerSettingsScreen extends ConsumerWidget {
               ],
             ),
           SectionHeader(context.tr('notifications')),
+          Text(context.tr('adhan_sound')),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final k in const ['full', 'short', 'system', 'silent'])
+                ChoiceChip(
+                  label: Text(context.tr('adhan_sound_$k')),
+                  selected: s.adhanSound == k,
+                  onSelected: (_) {
+                    ctrl.update((x) => x.copyWith(adhanSound: k));
+                    changed();
+                  },
+                ),
+            ],
+          ),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () async {
+                await Notifications.instance.requestPermissions();
+                if (!context.mounted) return;
+                await Notifications.instance.testAdhan(s.adhanSound, context.tr('adhan_test_title'), context.tr('adhan_test_body'));
+              },
+              icon: const Icon(Icons.volume_up_rounded),
+              label: Text(context.tr('adhan_test')),
+            ),
+          ),
+          Text(context.tr('adhan_sound_note'), style: const TextStyle(color: Brand.textLow, fontSize: 12)),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(context.tr('iqama_alert')),
+            subtitle: Text(context.tr('iqama_alert_sub', {'n': s.iqamaMinutes})),
+            value: s.iqamaAlert,
+            onChanged: (v) {
+              ctrl.update((x) => x.copyWith(iqamaAlert: v));
+              changed();
+            },
+          ),
+          if (s.iqamaAlert)
+            Wrap(
+              spacing: 6,
+              children: [
+                for (final m in const [5, 10, 15, 20, 25, 30])
+                  ChoiceChip(
+                    label: Text(context.tr('minutes_n', {'n': m})),
+                    selected: s.iqamaMinutes == m,
+                    onSelected: (_) {
+                      ctrl.update((x) => x.copyWith(iqamaMinutes: m));
+                      changed();
+                    },
+                  ),
+              ],
+            ),
           ListTile(
             title: Text(context.tr('pre_adhan')),
             trailing: DropdownButton<int>(
@@ -485,6 +541,24 @@ class PrayerSettingsScreen extends ConsumerWidget {
               if (context.mounted) changed();
             },
           ),
+          SectionHeader(context.tr('smart_reminders')),
+          for (final (key, value, apply) in <(String, bool, AppSettings Function(AppSettings, bool))>[
+            ('reminder_kahf_toggle', s.kahfReminder, (x, v) => x.copyWith(kahfReminder: v)),
+            ('reminder_salawat_toggle', s.salawatReminder, (x, v) => x.copyWith(salawatReminder: v)),
+            ('reminder_white_days_toggle', s.whiteDaysReminder, (x, v) => x.copyWith(whiteDaysReminder: v)),
+            ('reminder_mon_thu_toggle', s.monThuReminder, (x, v) => x.copyWith(monThuReminder: v)),
+            ('reminder_occasion_toggle', s.occasionFastReminder, (x, v) => x.copyWith(occasionFastReminder: v)),
+            ('reminder_ramadan_toggle', s.ramadanReminders, (x, v) => x.copyWith(ramadanReminders: v)),
+          ])
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.tr(key)),
+              value: value,
+              onChanged: (v) {
+                ctrl.update((x) => apply(x, v));
+                changed();
+              },
+            ),
           SectionHeader(context.tr('hijri_adjust')),
           Row(
             children: [

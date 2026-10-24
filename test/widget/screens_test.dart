@@ -35,6 +35,7 @@ void main() {
     expect(find.text('السلام عليكم'), findsOneWidget);
     expect(find.text('الصلاة القادمة'), findsOneWidget);
     expect(find.text('العصر'), findsWidgets, reason: 'next prayer at 14:00 in Makkah is Asr');
+    await tester.scrollUntilVisible(find.text('آية اليوم'), 300, scrollable: find.byType(Scrollable).first);
     expect(find.text('آية اليوم'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('قصص الأنبياء'), 300, scrollable: find.byType(Scrollable).first);
     expect(find.text('قصص الأنبياء'), findsOneWidget);

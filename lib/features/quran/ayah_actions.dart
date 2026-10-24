@@ -8,9 +8,11 @@ import '../../core/motion.dart';
 import '../../core/theme/brand.dart';
 import '../../domain/quran_models.dart';
 import '../../services/audio.dart';
+import '../hifz/recitation_test_screen.dart';
 import '../share/share_card.dart';
 import '../tadabbur/reflection_editor.dart';
 import 'tafsir_sheet.dart';
+import 'word_sheet.dart';
 
 /// Long list of things one can do with a verse, in a bottom sheet.
 Future<void> showAyahActions(BuildContext context, WidgetRef ref, AyahRef r) {
@@ -91,8 +93,12 @@ class _AyahActions extends ConsumerWidget {
             }),
             action(Icons.translate_rounded, context.tr('word_meanings'), () {
               close();
-              showTafsir(context, ref, r, editionId: 'gharib');
+              showWordSheet(context, r);
             }),
+            action(Icons.mic_rounded, context.tr('test_recitation'), () {
+              close();
+              push(context, RecitationTestScreen(surah: r.surah, from: r.ayah, to: (r.ayah + 4).clamp(1, info.ayahCount)));
+            }, color: Brand.gold),
             action(bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                 bookmarked ? context.tr('bookmarked') : context.tr('bookmark'), () {
               haptic(ref, HapticKind.medium);

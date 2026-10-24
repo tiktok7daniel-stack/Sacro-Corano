@@ -60,6 +60,25 @@ that were considered and the brand guidelines.
 - **Mosque / TV mode**: a full-screen board with a large clock, today's times,
   a countdown to the next adhan and an iqama countdown. Keeps the screen on.
 
+### New in 1.3
+- **Colour-coded tajweed** in the reader (verse and page modes), computed for
+  every verse with the open quran.ws tajweed engine; colour guide included.
+- **Word meanings**: long-press any word for its English meaning and
+  transliteration, and the verse's difficult words from *As-Siraj fi Bayan
+  Gharib al-Quran*.
+- **Recitation test**: recite from memory and the app follows word by word
+  with the phone's speech recogniser, revealing skipped words in red, with
+  hints and a score. From the verse menu, the hifz screen or the home screen.
+- **Real adhan sound** at every prayer (full or short public-domain
+  recordings, notification tone, or silent), a test button, a stop button,
+  an optional iqama alert, and exact alarms scheduled two weeks ahead.
+- **Ramadan mode**: day N and live countdown to iftar / end of suhoor,
+  a fasting log for every day of Ramadan, make-up (qada) fasts, a Ramadan
+  khatma plan and the iftar dua.
+- **Smart reminders**: Al-Kahf and salawat on Friday, the eve of the white
+  days, Monday/Thursday, Arafah and Tasu'a/Ashura, and suhoor/iftar in
+  Ramadan, each with its own switch.
+
 ### Remembrance
 - **Hisn al-Muslim** with 130+ situations (morning, evening, sleep, after
   prayer, travel, distress, …): tap-to-count cards, auto-advance, progress

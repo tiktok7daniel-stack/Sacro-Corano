@@ -14,6 +14,10 @@ Sources (fetch them first, see docs/DATA_SOURCES.md):
   npm  quran-meta@7.0.0        Hafs page / juz / hizb / sajda lists  MIT
   git  spa5k/tafsir_api        Tafsir al-Muyassar (King Fahd Complex)  MIT
   git  fawazahmed0/hadith-api  Forty Nawawi + Forty Qudsi (ar/en)      Unlicense
+  npm  @kmaslesa/holy-quran-word-by-word-full-data@1.0.6
+                               English word meanings + transliteration
+                               (Quran.com data)          ISC
+  (tajweed.json.gz is built separately: see tool/data/tajweed/README.md)
 
 Usage:
   python3 tool/data/build_data.py --src /path/to/downloads --out assets/data
@@ -182,6 +186,36 @@ def main():
         write_gz(os.path.join(out, "hadith.json.gz"), {
             "source": "github.com/fawazahmed0/hadith-api (Unlicense / public domain)",
             "collections": cols,
+        })
+
+    # Word by word (English meaning + transliteration), aligned to our words.
+    wp = os.path.join(src, "npm2/holy-quran-word-by-word-full-data-1.0.6/package/data.json")
+    if os.path.exists(wp):
+        import collections
+        import unicodedata
+        words = collections.defaultdict(list)
+        for page in json.load(open(wp)):
+            for ay in page["ayahs"]:
+                for w in ay["words"]:
+                    if w["char_type_name"] == "word":
+                        words[w["parentAyahVerseKey"]].append(
+                            (w["position"], w["translation"]["text"] or "", w["transliteration"]["text"] or ""))
+        text = json.load(gzip.open(os.path.join(out, "quran_uthmani.json.gz")))["ayahs"]
+
+        def toks(t):
+            return [x for x in t.split(" ") if any(unicodedata.category(c).startswith("L") for c in x)]
+
+        rows = []
+        for si, surah in enumerate(text, 1):
+            rows.append([])
+            for ai, t in enumerate(surah, 1):
+                ws = sorted(words[f"{si}:{ai}"])
+                rows[-1].append([[m, tr] for _, m, tr in ws] if len(ws) == len(toks(t)) else [])
+        write_gz(os.path.join(out, "wbw_en.json.gz"), {
+            "source": "Word-by-word English meanings and transliteration from Quran.com, as packaged in "
+                      "@kmaslesa/holy-quran-word-by-word-full-data 1.0.6 (ISC). Verses whose word split "
+                      "differs from the bundled text are left empty.",
+            "ayahs": rows,
         })
     print("done")
 

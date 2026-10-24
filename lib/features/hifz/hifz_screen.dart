@@ -9,6 +9,7 @@ import '../../core/widgets/common.dart';
 import '../../domain/srs.dart';
 import '../../services/audio.dart';
 import '../celebration/celebration.dart';
+import 'recitation_test_screen.dart';
 
 /// Memorisation with spaced repetition (SM-2): surahs are split into short
 /// units; each review is graded and rescheduled, mistakes are tracked.
@@ -28,7 +29,13 @@ class HifzScreen extends ConsumerWidget {
     final mistakes = cards.fold<int>(0, (s, c) => s + c.mistakes);
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(actions: [
+        IconButton(
+          tooltip: context.tr('test_recitation'),
+          onPressed: () => push(context, const RecitationPickerScreen()),
+          icon: const Icon(Icons.mic_rounded),
+        ),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addSurah(context, ref),
         icon: const Icon(Icons.add_rounded),
@@ -221,6 +228,11 @@ class _HifzSessionScreenState extends ConsumerState<HifzSessionScreen> {
       appBar: AppBar(
         title: Text('${q.surah(c.surah).nameAr} ${context.num(c.from)}–${context.num(c.to)}'),
         actions: [
+          IconButton(
+            tooltip: context.tr('test_recitation'),
+            icon: const Icon(Icons.mic_rounded),
+            onPressed: () => push(context, RecitationTestScreen(surah: c.surah, from: c.from, to: c.to)),
+          ),
           IconButton(
             tooltip: context.tr('listen'),
             icon: const Icon(Icons.headphones_rounded),

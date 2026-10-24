@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand.dart';
 import '../../data/quran/content_repository.dart';
 import '../../domain/reciters.dart';
+import 'widgets/tajweed_text.dart';
 
 Future<void> showReadingSettings(BuildContext context) => showModalBottomSheet<void>(
       context: context,
@@ -86,6 +87,18 @@ class _ReadingSettings extends ConsumerWidget {
             swatch(AppThemeKind.sepia, Brand.sepia, Brand.sepiaInk, context.tr('theme_sepia')),
           ]),
           const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(context.tr('tajweed_colors')),
+            subtitle: Text(context.tr('tajweed_colors_sub')),
+            value: s.tajweed,
+            onChanged: (v) => ctrl.update((x) => x.copyWith(tajweed: v)),
+            secondary: IconButton(
+              tooltip: context.tr('legend'),
+              icon: const Icon(Icons.palette_outlined),
+              onPressed: () => showTajweedLegend(context, dark: context.reading.page.computeLuminance() < 0.3),
+            ),
+          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(context.tr('page_mode')),
