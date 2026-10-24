@@ -38,6 +38,21 @@ android {
     }
 
     signingConfigs {
+        // Shared project key (password "android", not a secret). Every build
+        // without a private release key is signed with it, so each new APK
+        // installs as an update over the previous one instead of clashing.
+        create("shared") {
+            storeFile = file("mishkah-shared.keystore")
+            storePassword = "android"
+            keyAlias = "mishkah"
+            keyPassword = "android"
+        }
+        getByName("debug") {
+            storeFile = file("mishkah-shared.keystore")
+            storePassword = "android"
+            keyAlias = "mishkah"
+            keyPassword = "android"
+        }
         create("release") {
             if (envStore != null) {
                 storeFile = file(envStore)
@@ -55,7 +70,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("shared")
         }
     }
 }

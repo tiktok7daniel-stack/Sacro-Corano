@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../app/providers.dart';
 import '../../core/l10n/strings.dart';
@@ -27,6 +28,7 @@ import '../qibla/qibla_screen.dart';
 import '../quran/reader_screen.dart';
 import '../radio/radio_screen.dart';
 import '../ramadan/ramadan_screen.dart';
+import '../reciters/full_library_screen.dart';
 import '../reciters/reciters_screen.dart';
 import '../sadaqa/sadaqa_screen.dart';
 import '../settings/settings_screen.dart';
@@ -137,8 +139,21 @@ class HomeScreen extends ConsumerWidget {
               colors: Brand.gReciters,
               onTap: () => push(context, const RecitersScreen()),
             ),
+            GradientTile(label: context.tr('full_title'), icon: Icons.library_music_rounded, colors: Brand.gAzkar, onTap: () => push(context, const FullLibraryScreen())),
             GradientTile(label: context.tr('radio'), icon: Icons.radio_rounded, colors: Brand.gHifz, onTap: () => push(context, const RadioScreen())),
             GradientTile(label: context.tr('tasbih'), icon: Icons.touch_app_rounded, colors: Brand.gTasbih, onTap: () => push(context, const TasbihScreen())),
+            GradientTile(
+              label: context.tr('audio_tafsir'),
+              icon: Icons.headphones_rounded,
+              colors: Brand.gPrayer,
+              onTap: () => push(context, const AudioTafsirScreen()),
+            ),
+            GradientTile(
+              label: context.tr('adhan_sound'),
+              icon: Icons.campaign_rounded,
+              colors: Brand.gPrayer.reversed.toList(),
+              onTap: () => push(context, const PrayerSettingsScreen()),
+            ),
           ]),
           SliverToBoxAdapter(
             child: SectionHeader(
@@ -188,12 +203,6 @@ class HomeScreen extends ConsumerWidget {
           box(const VideosHomeCard()),
           SliverToBoxAdapter(child: SectionHeader(context.tr('section_reflect'))),
           _grid([
-            GradientTile(
-              label: context.tr('audio_tafsir'),
-              icon: Icons.headphones_rounded,
-              colors: Brand.gPrayer,
-              onTap: () => push(context, const AudioTafsirScreen()),
-            ),
             GradientTile(label: context.tr('sira'), icon: Icons.history_edu_rounded, colors: Brand.gMosque, onTap: () => push(context, const SiraScreen())),
             GradientTile(
               label: context.tr('prophets'),
@@ -204,18 +213,16 @@ class HomeScreen extends ConsumerWidget {
             GradientTile(label: context.tr('hifz'), icon: Icons.psychology_rounded, colors: Brand.gHifz, onTap: () => push(context, const HifzScreen())),
             GradientTile(label: context.tr('test_recitation'), icon: Icons.mic_rounded, colors: const [Color(0xFFD84315), Color(0xFFFF8A65)], onTap: () => push(context, const RecitationPickerScreen())),
             GradientTile(label: context.tr('khatma'), icon: Icons.flag_rounded, colors: Brand.gKhatma, onTap: () => push(context, const KhatmaScreen())),
-            GradientTile(label: context.tr('tadabbur'), icon: Icons.hub_rounded, colors: Brand.gStats, onTap: () => push(context, const TadabburScreen())),
             GradientTile(
               label: context.tr('mood_verses'),
               icon: Icons.spa_rounded,
               colors: Brand.gReciters.reversed.toList(),
               onTap: () => push(context, const MoodScreen()),
             ),
-            GradientTile(label: context.tr('stats'), icon: Icons.insights_rounded, colors: Brand.gStats.reversed.toList(), onTap: () => push(context, const StatsScreen())),
           ]),
           box(const HadithOfDayCard()),
           box(const OccasionCard()),
-          SliverToBoxAdapter(child: SectionHeader(context.tr('section_family'))),
+          SliverToBoxAdapter(child: SectionHeader(context.tr('more'))),
           _grid([
             GradientTile(label: context.tr('kids_mode'), icon: Icons.child_care_rounded, colors: Brand.gKids, onTap: () => push(context, const KidsScreen())),
             GradientTile(
@@ -229,6 +236,14 @@ class HomeScreen extends ConsumerWidget {
               icon: Icons.calendar_month_rounded,
               colors: Brand.gProphets,
               onTap: () => push(context, const HijriCalendarScreen()),
+            ),
+            GradientTile(label: context.tr('tadabbur'), icon: Icons.hub_rounded, colors: Brand.gStats, onTap: () => push(context, const TadabburScreen())),
+            GradientTile(label: context.tr('stats'), icon: Icons.insights_rounded, colors: Brand.gStats.reversed.toList(), onTap: () => push(context, const StatsScreen())),
+            GradientTile(
+              label: context.tr('share_app'),
+              icon: Icons.share_rounded,
+              colors: Brand.gQibla,
+              onTap: () => SharePlus.instance.share(ShareParams(text: context.tr('share_app_text'))),
             ),
           ]),
           const SliverToBoxAdapter(child: SizedBox(height: 140)),

@@ -40,7 +40,7 @@ class SettingsScreen extends ConsumerWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(context.tr('nav_settings'), style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
-              Text(context.tr('app_tagline'), style: const TextStyle(color: Brand.textMid)),
+              Text(context.tr('made_by'), style: const TextStyle(color: Brand.gold, fontWeight: FontWeight.w600)),
             ]),
           ),
         ]),

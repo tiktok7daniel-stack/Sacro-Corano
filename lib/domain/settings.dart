@@ -33,15 +33,15 @@ class AppSettings {
     this.azkarReminders = true,
     this.wirdReminderHour = 21,
     this.tasbihGoal = 100,
+    this.ramadanReminders = true,
+    this.kahfReminder = true,
+    this.salawatReminder = true,
     this.kidsPin,
     this.onboarded = false,
     this.tajweed = true,
     this.adhanSound = 'full',
     this.iqamaAlert = false,
     this.iqamaMinutes = 15,
-    this.ramadanReminders = true,
-    this.kahfReminder = true,
-    this.salawatReminder = true,
     this.whiteDaysReminder = true,
     this.monThuReminder = false,
     this.occasionFastReminder = true,
@@ -73,6 +73,9 @@ class AppSettings {
   final bool azkarReminders;
   final int wirdReminderHour;
   final int tasbihGoal;
+  final bool ramadanReminders;
+  final bool kahfReminder;
+  final bool salawatReminder;
   final String? kidsPin;
   final bool onboarded;
 
@@ -81,9 +84,6 @@ class AppSettings {
   final String adhanSound;
   final bool iqamaAlert;
   final int iqamaMinutes;
-  final bool ramadanReminders;
-  final bool kahfReminder;
-  final bool salawatReminder;
   final bool whiteDaysReminder;
   final bool monThuReminder;
   final bool occasionFastReminder;
@@ -117,6 +117,9 @@ class AppSettings {
     bool? azkarReminders,
     int? wirdReminderHour,
     int? tasbihGoal,
+    bool? ramadanReminders,
+    bool? kahfReminder,
+    bool? salawatReminder,
     String? kidsPin,
     bool clearKidsPin = false,
     bool? onboarded,
@@ -124,9 +127,6 @@ class AppSettings {
     String? adhanSound,
     bool? iqamaAlert,
     int? iqamaMinutes,
-    bool? ramadanReminders,
-    bool? kahfReminder,
-    bool? salawatReminder,
     bool? whiteDaysReminder,
     bool? monThuReminder,
     bool? occasionFastReminder,
@@ -158,15 +158,15 @@ class AppSettings {
         azkarReminders: azkarReminders ?? this.azkarReminders,
         wirdReminderHour: wirdReminderHour ?? this.wirdReminderHour,
         tasbihGoal: tasbihGoal ?? this.tasbihGoal,
+        ramadanReminders: ramadanReminders ?? this.ramadanReminders,
+        kahfReminder: kahfReminder ?? this.kahfReminder,
+        salawatReminder: salawatReminder ?? this.salawatReminder,
         kidsPin: clearKidsPin ? null : (kidsPin ?? this.kidsPin),
         onboarded: onboarded ?? this.onboarded,
         tajweed: tajweed ?? this.tajweed,
         adhanSound: adhanSound ?? this.adhanSound,
         iqamaAlert: iqamaAlert ?? this.iqamaAlert,
         iqamaMinutes: iqamaMinutes ?? this.iqamaMinutes,
-        ramadanReminders: ramadanReminders ?? this.ramadanReminders,
-        kahfReminder: kahfReminder ?? this.kahfReminder,
-        salawatReminder: salawatReminder ?? this.salawatReminder,
         whiteDaysReminder: whiteDaysReminder ?? this.whiteDaysReminder,
         monThuReminder: monThuReminder ?? this.monThuReminder,
         occasionFastReminder: occasionFastReminder ?? this.occasionFastReminder,
@@ -199,15 +199,15 @@ class AppSettings {
         'azkarReminders': azkarReminders,
         'wirdReminderHour': wirdReminderHour,
         'tasbihGoal': tasbihGoal,
+        'ramadanReminders': ramadanReminders,
+        'kahfReminder': kahfReminder,
+        'salawatReminder': salawatReminder,
         'kidsPin': kidsPin,
         'onboarded': onboarded,
         'tajweed': tajweed,
         'adhanSound': adhanSound,
         'iqamaAlert': iqamaAlert,
         'iqamaMinutes': iqamaMinutes,
-        'ramadanReminders': ramadanReminders,
-        'kahfReminder': kahfReminder,
-        'salawatReminder': salawatReminder,
         'whiteDaysReminder': whiteDaysReminder,
         'monThuReminder': monThuReminder,
         'occasionFastReminder': occasionFastReminder,
@@ -259,15 +259,15 @@ class AppSettings {
       azkarReminders: pick('azkarReminders', d.azkarReminders),
       wirdReminderHour: pick('wirdReminderHour', d.wirdReminderHour),
       tasbihGoal: pick('tasbihGoal', d.tasbihGoal),
+      ramadanReminders: pick('ramadanReminders', d.ramadanReminders),
+      kahfReminder: pick('kahfReminder', d.kahfReminder),
+      salawatReminder: pick('salawatReminder', d.salawatReminder),
       kidsPin: text('kidsPin'),
       onboarded: pick('onboarded', d.onboarded),
       tajweed: pick('tajweed', d.tajweed),
       adhanSound: pick('adhanSound', d.adhanSound),
       iqamaAlert: pick('iqamaAlert', d.iqamaAlert),
       iqamaMinutes: pick('iqamaMinutes', d.iqamaMinutes),
-      ramadanReminders: pick('ramadanReminders', d.ramadanReminders),
-      kahfReminder: pick('kahfReminder', d.kahfReminder),
-      salawatReminder: pick('salawatReminder', d.salawatReminder),
       whiteDaysReminder: pick('whiteDaysReminder', d.whiteDaysReminder),
       monThuReminder: pick('monThuReminder', d.monThuReminder),
       occasionFastReminder: pick('occasionFastReminder', d.occasionFastReminder),

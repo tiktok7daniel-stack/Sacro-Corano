@@ -345,6 +345,7 @@ const _ar = <String, String>{
   'stats_privacy': 'كلها محسوبة على جهازك مما سجّلته أنت، ولا يراها أحد غيرك.',
   // Settings
   'app_tagline': 'مصحف ونور في جيبك',
+  'made_by': 'من عمل يوسف باستخدام الذكاء الاصطناعي',
   'appearance': 'المظهر',
   'theme': 'السمة',
   'language': 'اللغة',
@@ -594,6 +595,16 @@ const _ar = <String, String>{
   'iftar_dua': 'دعاء الإفطار',
   'i_fasted_today': 'صمتُ اليوم',
   'istikhara': 'الاستخارة',
+  // Full recitation library
+  'download': 'تحميل',
+  'full_title': 'تلاوات كاملة',
+  'full_sub': 'سور كاملة بملف واحد لكبار القراء، تسمعها أو تحمّلها',
+  'full_search': 'ابحث عن قارئ',
+  'full_sets': '{n} روايات',
+  'full_count': '{n} سورة',
+  'full_failed': 'تعذّر التحميل، تأكد من الإنترنت وحاول مرة أخرى.',
+  'full_card': 'تلاوات كاملة لكبار القراء',
+  'full_card_sub': 'مئات القراء: عبد الباسط والحصري والمنشاوي وغيرهم، سورة كاملة بملف واحد',
 };
 
 const _en = <String, String>{
@@ -922,6 +933,7 @@ const _en = <String, String>{
   'streak_n': '{n}-day streak',
   'stats_privacy': 'All computed on your device from what you logged. No one else sees it.',
   'app_tagline': 'A lamp of light in your pocket',
+  'made_by': 'Made by Yusuf using AI',
   'appearance': 'Appearance',
   'theme': 'Theme',
   'language': 'Language',
@@ -1171,4 +1183,14 @@ const _en = <String, String>{
   'iftar_dua': 'Iftar dua',
   'i_fasted_today': 'I fasted today',
   'istikhara': 'Istikhara',
+  // Full recitation library
+  'download': 'Download',
+  'full_title': 'Full recitations',
+  'full_sub': 'Whole surahs in one file by renowned reciters: listen or save',
+  'full_search': 'Search for a reciter',
+  'full_sets': '{n} sets',
+  'full_count': '{n} surahs',
+  'full_failed': 'Download failed. Check your connection and try again.',
+  'full_card': 'Full recitations by renowned reciters',
+  'full_card_sub': 'Hundreds of reciters, each surah as one file',
 };

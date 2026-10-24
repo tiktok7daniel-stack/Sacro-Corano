@@ -74,7 +74,7 @@ void main() {
       'حين تحتاجها',
       'اقرأ وشاهد',
       'تدبّر وسيرة',
-      'للعائلة والمسجد',
+      'المزيد',
     ]);
     expect(find.text('التفسير المسموع'), findsOneWidget);
     expect(find.text('السيرة النبوية'), findsOneWidget);

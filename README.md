@@ -31,11 +31,15 @@ that were considered and the brand guidelines.
 - Surah, juz and hizb-quarter indexes; rubʿ and sajda markers.
 - Adjustable font size; four reading backgrounds (match app, night, paper, sepia);
   the reader's top bar hides while you scroll.
-- **Verse-by-verse recitation** by 18 reciters (Alafasy, al-Husary, Abdul Basit,
+- **Verse-by-verse recitation** by 32 reciters (Alafasy, al-Husary, Abdul Basit,
   al-Minshawi, al-Hudhaify, as-Sudais, ash-Shuraim, al-Muaiqly, …). The verse
   being recited is highlighted and followed automatically. Plays in the
   background with lock-screen and headset controls. Speed control, repeat a
   verse, loop a range, and **per-surah offline download**.
+- **Full recitations library**: hundreds of reciters from MP3Quran.net (Abdul
+  Basit, al-Husary, al-Minshawi, Mustafa Ismail…), each surah as one gapless
+  file, streamed or saved for offline listening. The list is fetched when you
+  open it and cached.
 - **Tafsir**: al-Muyassar ships with the app. Ibn Kathir, at-Tabari,
   al-Qurtubi, as-Saʿdi, al-Baghawi, al-Wasit and al-Mukhtasar download per
   surah and are then cached offline. Asbab al-Nuzul (al-Wahidi) and an English
@@ -108,6 +112,19 @@ that were considered and the brand guidelines.
   Quran, filterable (Ulul ʿAzm / messengers / prophets). Each story is a guided
   journey through the Quran passages, with the Muyassar explanation for each
   verse and audio for the passage. No invented narrative.
+- **Recitation check**: recite a verse aloud and the app follows you word by
+  word using the device's Arabic speech recogniser: green for right, red for a
+  different word, an outline for a skipped one. A "hide the text" mode turns
+  it into a memorisation test. It is an approximate aid, not a tajweed judge.
+  By default Android's recogniser may use Google's servers; the "on-device
+  only" switch keeps the audio on the phone (needs the offline Arabic pack).
+- **Ramadan mode**: suhoor / iftar countdown, a one-juz-a-day khatma plan that
+  fits a 29- or 30-day month, a fasting log, and a **qada tracker** that counts
+  the days you missed (plus older ones you add) and the ones you have made up.
+  Suhoor and iftar alerts switch on by themselves in Ramadan.
+- **Smart reminders** (opt-in): Surat al-Kahf on Friday morning, an evening
+  note before Monday/Thursday and white-day fasts (never in Ramadan or on
+  Eid), and a daily reminder to send blessings on the Prophet ﷺ.
 - **Focused listening**: only the verse being recited, cross-fading as the
   recitation moves on.
 - **Kids mode**: Juz ʿAmma with large text, repeat-listening and stars a parent
