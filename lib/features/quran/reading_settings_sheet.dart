@@ -83,7 +83,7 @@ class _ReadingSettings extends ConsumerWidget {
           Row(children: [
             swatch(AppThemeKind.system, Theme.of(context).scaffoldBackgroundColor, Theme.of(context).colorScheme.onSurface, context.tr('theme_match')),
             swatch(AppThemeKind.night, Brand.night, Brand.textHigh, context.tr('theme_night')),
-            swatch(AppThemeKind.light, Brand.paperSurface, Brand.lightInk, context.tr('theme_paper')),
+            swatch(AppThemeKind.light, Colors.white, Colors.black, context.tr('theme_paper')),
             swatch(AppThemeKind.sepia, Brand.sepia, Brand.sepiaInk, context.tr('theme_sepia')),
           ]),
           const SizedBox(height: 12),

@@ -18,7 +18,10 @@ does not allow redistribution.
 | `hadith.json.gz` | الأربعون النووية and الأحاديث القدسية الأربعون (Arabic + English) | [`fawazahmed0/hadith-api`](https://github.com/fawazahmed0/hadith-api) editions `ara-nawawi`, `ara-qudsi`, `eng-nawawi`, `eng-qudsi` | The Unlicense (public domain); text reproduced unchanged |
 | `tajweed.json.gz` | Tajweed colour runs for every verse, computed on our own Uthmani text | Engine [quran-ws/quran-tajweed](https://github.com/quran-ws/quran-tajweed) `packages/core` (MIT) running the rule corpus `@quran.ws/tajwid-rules` 0.1.0 (CC BY 4.0, with a standing waiver of attribution inside products; attributed here anyway). See `tool/data/tajweed/README.md` | MIT / CC BY 4.0 |
 | `wbw_en.json.gz` | English word-by-word meanings and transliteration | Quran.com data as packaged in `@kmaslesa/holy-quran-word-by-word-full-data` 1.0.6 | ISC (package); content credited to Quran.com |
+| `mushaf_lines.json.gz` | Printed Madani page layout (which words sit on which of the 15 lines of each page), mapped onto our text by `tool/data/build_mushaf_lines.py` | Quran.com data as packaged in `@kmaslesa/holy-quran-word-by-word-full-data` 1.0.6 | ISC (package); content credited to Quran.com |
 | `meta.json` | Hafs page, juz, hizb-quarter and sajda boundaries | [`quran-meta` 7.0.0](https://github.com/quran-center/quran-meta) | MIT |
+
+The open tanween of the text (KFGQPC positional code points U+0657/U+065E/U+0656) is shown with the standard U+08F0–U+08F2 that Amiri Quran draws; one code point for one, nothing else changes.
 
 `tool/data/build_data.py` regenerates every file from those sources and
 documents the only transformation applied (moving the surah introductions of

@@ -45,13 +45,20 @@ class QuranData {
   @visibleForTesting
   static QuranData fromRaw(String metaJson, Uint8List textGz) => _parse((metaJson, textGz));
 
+  /// The text writes the open (mutatabi') tanween with the positional code
+  /// points of the KFGQPC fonts (U+0657, U+065E, U+0656). Amiri Quran draws
+  /// those as an inverted damma, nothing and a subscript alef, so they are
+  /// swapped for the standard open tanween (U+08F0–U+08F2). One code point
+  /// for one, so tajweed offsets and word counts are unchanged.
+  static String standardTanween(String s) => s.replaceAll('\u0657', '\u08F0').replaceAll('\u065E', '\u08F1').replaceAll('\u0656', '\u08F2');
+
   static QuranData _parse((String, Uint8List) input) {
     final meta = jsonDecode(input.$1) as Map<String, dynamic>;
     final textJson = jsonDecode(utf8.decode(gzip.decode(input.$2))) as Map<String, dynamic>;
     List<int> ints(String k) => (meta[k] as List).cast<int>();
     return QuranData._(
       surahs: (meta['surahs'] as List).map((e) => SurahInfo.fromJson(e as Map<String, dynamic>)).toList(),
-      text: (textJson['ayahs'] as List).map((s) => (s as List).cast<String>()).toList(),
+      text: (textJson['ayahs'] as List).map((s) => (s as List).cast<String>().map(standardTanween).toList()).toList(),
       pageStarts: ints('pages'),
       juzStarts: ints('juz'),
       rubStarts: ints('rub'),

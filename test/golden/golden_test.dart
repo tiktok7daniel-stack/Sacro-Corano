@@ -1,13 +1,18 @@
 @Tags(['golden'])
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mishkah/app/providers.dart';
 import 'package:mishkah/core/theme/app_theme.dart';
+import 'package:mishkah/data/quran/mushaf_layout.dart';
 import 'package:mishkah/core/theme/brand.dart';
 import 'package:mishkah/core/widgets/common.dart';
 import 'package:mishkah/core/widgets/logo.dart';
 import 'package:mishkah/features/prayer/prayer_card.dart';
+import 'package:mishkah/features/quran/reader_screen.dart';
 import 'package:mishkah/features/share/share_card.dart';
 
 import '../helpers.dart';
@@ -81,4 +86,29 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await expectLater(find.byType(PrayerCard), matchesGoldenFile('goldens/prayer_card.png'));
   });
+
+  // A phone-sized mushaf page must fit with no overflow, in both palettes.
+  for (final (name, page, theme) in [('mushaf_page_1', 1, AppThemeKind.night), ('mushaf_page_50', 50, AppThemeKind.light), ('mushaf_page_604', 604, AppThemeKind.sepia), ('mushaf_page_2', 2, AppThemeKind.light), ('mushaf_page_255', 255, AppThemeKind.light)]) {
+    testWidgets('mushaf page $page', (tester) async {
+      await pumpScreen(
+        tester,
+        Builder(
+          builder: (context) => Theme(
+            data: Theme.of(context).copyWith(extensions: [switch (theme) {
+              AppThemeKind.light => ReadingPalette.light,
+              AppThemeKind.sepia => ReadingPalette.sepia,
+              _ => ReadingPalette.night,
+            }]),
+            child: Scaffold(body: MushafPage(quran: testQuran(), page: page, onAyahTap: (_) {})),
+          ),
+        ),
+        env,
+        overrides: [mushafLayoutProvider.overrideWith((ref) async => MushafLayout.parse(File('assets/data/mushaf_lines.json.gz').readAsBytesSync()))],
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      await expectLater(find.byType(MushafPage), matchesGoldenFile('goldens/$name.png'));
+    });
+  }
 }

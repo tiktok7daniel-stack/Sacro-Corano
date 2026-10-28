@@ -4,10 +4,12 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/theme/app_theme.dart';
 import '../data/azkar_repository.dart';
 import '../data/hadith_repository.dart';
 import '../data/local/storage.dart';
 import '../data/quran/content_repository.dart';
+import '../data/quran/mushaf_layout.dart';
 import '../data/quran/quran_data.dart';
 import '../data/quran/word_data.dart';
 import '../domain/khatma.dart';
@@ -34,6 +36,8 @@ final azkarProvider = FutureProvider<AzkarData>((ref) => AzkarData.load());
 final tajweedProvider = FutureProvider<TajweedData>((ref) => TajweedData.load());
 
 final wordByWordProvider = FutureProvider<WordByWord>((ref) => WordByWord.load());
+
+final mushafLayoutProvider = FutureProvider<MushafLayout>((ref) => MushafLayout.load());
 
 final translationProvider = FutureProvider.family<Translation, String>((ref, id) => ref.watch(contentRepoProvider).translation(id));
 
@@ -69,7 +73,18 @@ final minuteProvider = Provider<DateTime>((ref) {
 
 class SettingsController extends Notifier<AppSettings> {
   @override
-  AppSettings build() => AppSettings.fromJson(ref.read(storageProvider).readSettings());
+  AppSettings build() {
+    final storage = ref.read(storageProvider);
+    var s = AppSettings.fromJson(storage.readSettings());
+    // v1.5: the reader opens as mushaf pages, white page and black text,
+    // for everyone once; both can be changed back in the reading settings.
+    if (storage.read<bool>('mig_mushafPages') != true) {
+      s = s.copyWith(pageMode: true, readingTheme: AppThemeKind.light);
+      storage.writeSettings(s.toJson());
+      storage.write('mig_mushafPages', true);
+    }
+    return s;
+  }
 
   void update(AppSettings Function(AppSettings s) change) {
     state = change(state);

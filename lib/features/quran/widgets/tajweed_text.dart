@@ -90,6 +90,53 @@ List<InlineSpan> verseSpans(
   return out;
 }
 
+/// The words of a verse (as counted by [verseWords]), each as coloured
+/// spans; stand-alone signs stay with the word before them.
+List<List<InlineSpan>> wordSpanLists(
+  String text, {
+  List<int> runs = const [],
+  List<String> classes = const [],
+  Map<String, Color> colors = const {},
+}) {
+  final cps = text.runes.toList();
+  final cls = List<int>.filled(cps.length, -1);
+  for (var i = 0; i + 2 < runs.length; i += 3) {
+    for (var k = runs[i]; k < runs[i + 1] && k < cps.length; k++) {
+      cls[k] = runs[i + 2];
+    }
+  }
+  Color? colorOf(int c) => c < 0 || c >= classes.length ? null : colors[classes[c]];
+  final out = <List<InlineSpan>>[];
+  var i = 0;
+  while (i < cps.length) {
+    var j = i;
+    while (j < cps.length && cps[j] != 0x20) {
+      j++;
+    }
+    final pieces = <InlineSpan>[];
+    var k = i;
+    while (k < j) {
+      var e = k;
+      while (e < j && cls[e] == cls[k]) {
+        e++;
+      }
+      final chunk = String.fromCharCodes(cps.sublist(k, e).where((c) => c != 0x06DE));
+      if (chunk.isNotEmpty) {
+        final color = colorOf(cls[k]);
+        pieces.add(TextSpan(text: chunk, style: color == null ? null : TextStyle(color: color)));
+      }
+      k = e;
+    }
+    if (cps.sublist(i, j).any(isArabicLetter)) {
+      out.add(pieces);
+    } else if (pieces.isNotEmpty && out.isNotEmpty) {
+      out.last.addAll([const TextSpan(text: ' '), ...pieces]);
+    }
+    i = j + 1;
+  }
+  return out;
+}
+
 /// Legend of the tajweed colours.
 class TajweedLegend extends StatelessWidget {
   const TajweedLegend({super.key, required this.dark});

@@ -30,9 +30,10 @@ class ReadingPalette extends ThemeExtension<ReadingPalette> {
     marker: Brand.gold,
     highlight: Color(0x332FA4AF),
   );
+  // White page, black text: the printed-mushaf look.
   static const light = ReadingPalette(
-    page: Brand.paperSurface,
-    ink: Brand.lightInk,
+    page: Color(0xFFFFFFFF),
+    ink: Color(0xFF000000),
     accent: Brand.tealDeep,
     marker: Brand.goldDeep,
     highlight: Color(0x2A1E7F8A),

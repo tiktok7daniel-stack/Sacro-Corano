@@ -75,8 +75,11 @@ Future<TestEnv> createEnv({AppSettings? settings}) async {
             reduceMotion: true,
             onboarded: true,
             autoLocation: false,
+            pageMode: false,
           ))
       .toJson());
+  // Tests pick the reading mode themselves.
+  await storage.write('mig_mushafPages', true);
   return TestEnv(storage, dir);
 }
 

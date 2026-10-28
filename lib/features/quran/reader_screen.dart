@@ -12,7 +12,9 @@ import '../../core/motion.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand.dart';
 import '../../core/widgets/common.dart';
+import '../../data/quran/mushaf_layout.dart';
 import '../../data/quran/quran_data.dart';
+import '../../data/quran/word_data.dart';
 import '../../domain/quran_models.dart';
 import '../../domain/translation_helpers.dart';
 import '../../services/audio.dart';
@@ -41,6 +43,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
   late AyahRef _anchor = AyahRef(widget.surah, widget.initialAyah);
   AyahRef? _selected;
   Timer? _readingTimer;
+  Timer? _hideChrome;
   bool _chrome = true;
 
   @override
@@ -48,6 +51,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _startTimer();
+    // Mushaf pages: the bars step aside after a moment so the page header
+    // shows; a tap on the page brings them back.
+    if (ref.read(settingsProvider).pageMode) {
+      _hideChrome = Timer(const Duration(milliseconds: 2500), () {
+        if (mounted && ref.read(settingsProvider).pageMode) setState(() => _chrome = false);
+      });
+    }
   }
 
   void _startTimer() {
@@ -64,6 +74,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _readingTimer?.cancel();
+    _hideChrome?.cancel();
     super.dispose();
   }
 
@@ -581,7 +592,8 @@ class _PageModeState extends ConsumerState<_PageMode> {
             return _PageTurn(delta: delta, child: child!);
           },
           child: GestureDetector(
-            onDoubleTap: widget.onToggleChrome,
+            behavior: HitTestBehavior.translucent,
+            onTap: widget.onToggleChrome,
             child: MushafPage(
               quran: widget.quran,
               page: i + 1,
@@ -633,7 +645,10 @@ class _PageTurn extends StatelessWidget {
   }
 }
 
-/// One Madani page: verses flow as justified text, tappable per verse.
+/// One Madani page laid out like a printed mushaf: a framed page that
+/// always fits the screen (the text size is chosen so the whole page fits,
+/// never above the reader's own size), the surah and juz in the header,
+/// the page number at the foot, and every verse tappable.
 class MushafPage extends ConsumerStatefulWidget {
   const MushafPage({super.key, required this.quran, required this.page, this.selected, required this.onAyahTap});
   final QuranData quran;
@@ -645,6 +660,20 @@ class MushafPage extends ConsumerStatefulWidget {
   ConsumerState<MushafPage> createState() => _MushafPageState();
 }
 
+/// A run of verses, or a surah banner (with its basmala when it has one).
+class _Segment {
+  _Segment.text(this.spans) : surah = null;
+  _Segment.banner(this.surah) : spans = const [];
+  final List<InlineSpan> spans;
+  final SurahInfo? surah;
+}
+
+const _basmala = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
+const _lineHeight = 1.95;
+
+/// Text sizes already fitted, by page and box; layout is the costly part.
+final _fitCache = <String, double>{};
+
 class _MushafPageState extends ConsumerState<MushafPage> {
   final List<TapGestureRecognizer> _recognizers = [];
 
@@ -654,6 +683,54 @@ class _MushafPageState extends ConsumerState<MushafPage> {
       r.dispose();
     }
     super.dispose();
+  }
+
+  static double _bannerHeight(double fs) => fs * 1.7;
+  static bool _hasBasmala(SurahInfo s) => s.number != 1 && s.number != 9;
+
+  /// Height of the page's content at font size [fs] in a column [width] wide.
+  static double _heightAt(List<_Segment> segments, double fs, double width, TextStyle base) {
+    var h = 0.0;
+    for (final seg in segments) {
+      final style = base.copyWith(fontSize: fs);
+      final painter = TextPainter(textDirection: TextDirection.rtl, textAlign: TextAlign.justify, textScaler: TextScaler.noScaling);
+      if (seg.surah != null) {
+        h += _bannerHeight(fs) + fs * 0.3;
+        if (_hasBasmala(seg.surah!)) {
+          painter.text = TextSpan(text: _basmala, style: style);
+          painter.layout(maxWidth: width);
+          h += painter.height;
+        }
+      } else {
+        painter.text = TextSpan(style: style, children: seg.spans);
+        painter.layout(maxWidth: width);
+        h += painter.height;
+      }
+      painter.dispose();
+    }
+    return h;
+  }
+
+  /// The largest size (up to [maxSize]) at which the page fits [height].
+  static double _fit(String key, List<_Segment> segments, double width, double height, double maxSize, TextStyle base) {
+    final cached = _fitCache[key];
+    if (cached != null) return cached;
+    var lo = 10.0;
+    var hi = maxSize;
+    if (_heightAt(segments, hi, width, base) <= height) {
+      lo = hi;
+    } else {
+      for (var i = 0; i < 9; i++) {
+        final mid = (lo + hi) / 2;
+        if (_heightAt(segments, mid, width, base) <= height) {
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+    }
+    if (_fitCache.length > 400) _fitCache.clear();
+    return _fitCache[key] = lo;
   }
 
   @override
@@ -669,22 +746,23 @@ class _MushafPageState extends ConsumerState<MushafPage> {
     final playing = ref.watch(audioProvider.select((x) => x.current));
     final refs = q.ayahsOnPage(widget.page);
     final first = refs.first;
-    final style = TextStyle(fontFamily: Brand.quranFont, fontSize: s.quranFontSize * 0.86, height: 2.05, color: p.ink);
     final tajweed = s.tajweed ? ref.watch(tajweedProvider).value : null;
-    final colors = tajweedColors(dark: p.page.computeLuminance() < 0.3);
+    final dark = p.page.computeLuminance() < 0.3;
+    final colors = tajweedColors(dark: dark);
+    final base = TextStyle(fontFamily: Brand.quranFont, height: _lineHeight, color: p.ink);
+    final layout = ref.watch(mushafLayoutProvider).value;
 
-    final blocks = <Widget>[];
+    final segments = <_Segment>[];
     var spans = <InlineSpan>[];
     void flush() {
-      if (spans.isEmpty) return;
-      blocks.add(Text.rich(TextSpan(children: spans), textAlign: TextAlign.justify, style: style));
-      spans = [];
+      if (spans.isNotEmpty) segments.add(_Segment.text(spans));
+      spans = <InlineSpan>[];
     }
 
     for (final r in refs) {
       if (r.ayah == 1) {
         flush();
-        blocks.add(SurahHeader(info: q.surah(r.surah), palette: p));
+        segments.add(_Segment.banner(q.surah(r.surah)));
       }
       final rec = TapGestureRecognizer()..onTap = () => widget.onAyahTap(r);
       _recognizers.add(rec);
@@ -693,7 +771,7 @@ class _MushafPageState extends ConsumerState<MushafPage> {
         style: hl ? TextStyle(backgroundColor: p.highlight) : null,
         children: [
           // A label needs text of its own: a zero-width space carries it.
-          TextSpan(text: '\u200B', semanticsLabel: '${context.tr('ayah_n', {'n': r.ayah})} ${q.text(r.surah, r.ayah)}', recognizer: rec),
+          TextSpan(text: '​', semanticsLabel: '${context.tr('ayah_n', {'n': r.ayah})} ${q.text(r.surah, r.ayah)}', recognizer: rec),
           ...verseSpans(
             q.text(r.surah, r.ayah),
             runs: tajweed?.runs(r.surah, r.ayah) ?? const [],
@@ -708,36 +786,317 @@ class _MushafPageState extends ConsumerState<MushafPage> {
     }
     flush();
 
-    final surahNames = refs.map((r) => r.surah).toSet().map((n) => q.surah(n).nameAr).join(' · ');
-    return Container(
-      color: p.page,
+    final surahs = refs.map((r) => r.surah).toSet().toList();
+    final headerStyle = TextStyle(fontFamily: Brand.naskhFont, color: p.ink.withValues(alpha: 0.75), fontSize: 13, fontWeight: FontWeight.w600);
+    final frame = p.marker;
+    // Odd pages sit on the right of the open book: the spine is on their left.
+    final spineOnLeft = widget.page.isOdd;
+
+    return ColoredBox(
+      color: Color.alphaBlend(frame.withValues(alpha: dark ? 0.06 : 0.12), p.page),
       child: SafeArea(
-        child: Column(children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 4, 20, 4),
-            child: Row(children: [
-              Text(surahNames, style: TextStyle(fontFamily: Brand.naskhFont, color: p.ink.withValues(alpha: 0.65), fontSize: 14)),
-              const Spacer(),
-              Text(context.tr('juz_n', {'n': q.juzOf(first.surah, first.ayah)}), style: TextStyle(color: p.ink.withValues(alpha: 0.65), fontSize: 13)),
-            ]),
-          ),
-          Divider(color: p.marker.withValues(alpha: 0.35), indent: 20, endIndent: 20, height: 1),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 90),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: blocks),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: p.page,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: frame, width: 2.2),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.4 : 0.15), blurRadius: 8, offset: const Offset(0, 3))],
+              gradient: LinearGradient(
+                begin: spineOnLeft ? Alignment.centerLeft : Alignment.centerRight,
+                end: spineOnLeft ? Alignment.centerRight : Alignment.centerLeft,
+                stops: const [0, 0.06, 1],
+                colors: [Color.alphaBlend(Colors.black.withValues(alpha: dark ? 0.25 : 0.08), p.page), p.page, p.page],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 70),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(border: Border.all(color: p.marker.withValues(alpha: 0.6)), borderRadius: BorderRadius.circular(20)),
-              child: Text(context.num(widget.page), style: TextStyle(color: p.ink)),
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: frame.withValues(alpha: 0.55)),
+              ),
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+              child: Column(children: [
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Row(children: [
+                    Expanded(
+                      child: Text(
+                        surahs.map((n) => 'سورة ${q.surah(n).nameAr}').join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: headerStyle,
+                      ),
+                    ),
+                    Text(
+                      '${context.tr('juz_n', {'n': q.juzOf(first.surah, first.ayah)})} · ${context.tr('hizb_n', {'n': q.hizbOf(first.surah, first.ayah)})}',
+                      style: headerStyle,
+                    ),
+                  ]),
+                ),
+                Divider(color: frame.withValues(alpha: 0.45), height: 10),
+                Expanded(
+                  child: layout != null && layout.page(widget.page).isNotEmpty
+                      ? _LinedPage(
+                          quran: q,
+                          page: widget.page,
+                          lines: layout.page(widget.page),
+                          palette: p,
+                          tajweed: tajweed,
+                          colors: colors,
+                          highlighted: {?playing, ?widget.selected},
+                          onAyahTap: widget.onAyahTap,
+                        )
+                      : LayoutBuilder(builder: (context, box) {
+                    final key = '${widget.page}|${box.maxWidth.round()}x${box.maxHeight.round()}|${s.quranFontSize}|${tajweed != null}';
+                    final fs = _fit(key, segments, box.maxWidth, box.maxHeight, s.quranFontSize, base);
+                    final style = base.copyWith(fontSize: fs);
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final seg in segments)
+                          if (seg.surah != null) ...[
+                            _SurahBanner(info: seg.surah!, size: fs, palette: p),
+                            SizedBox(height: fs * 0.3),
+                            if (_hasBasmala(seg.surah!))
+                              Text(_basmala,
+                                  textAlign: TextAlign.center, textDirection: TextDirection.rtl, textScaler: TextScaler.noScaling, style: style),
+                          ] else
+                            Text.rich(
+                              TextSpan(children: seg.spans),
+                              textAlign: TextAlign.justify,
+                              textDirection: TextDirection.rtl,
+                              textScaler: TextScaler.noScaling,
+                              style: style,
+                            ),
+                      ],
+                    );
+                  }),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: frame.withValues(alpha: 0.7)),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(context.num(widget.page), style: TextStyle(color: p.ink, fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ]),
             ),
           ),
-        ]),
+        ),
       ),
     );
   }
+}
+
+/// A page drawn line for line as printed: 15 lines (8 on the first two
+/// pages, set in the middle), every line justified edge to edge, words
+/// tappable (verse actions) and long-pressable (word meaning).
+class _LinedPage extends ConsumerWidget {
+  const _LinedPage({
+    required this.quran,
+    required this.page,
+    required this.lines,
+    required this.palette,
+    required this.tajweed,
+    required this.colors,
+    required this.highlighted,
+    required this.onAyahTap,
+  });
+
+  final QuranData quran;
+  final int page;
+  final List<MushafLine> lines;
+  final ReadingPalette palette;
+  final TajweedData? tajweed;
+  final Map<String, Color> colors;
+  final Set<AyahRef> highlighted;
+  final void Function(AyahRef) onAyahTap;
+
+  static const _ref = 20.0;
+
+  /// Natural width (at [_ref] px) of each line's tokens, measured once per
+  /// page: the font size is then the largest at which every line fits.
+  static final _widthCache = <int, List<List<double>>>{};
+
+  List<List<double>> _widths(Map<int, List<List<InlineSpan>>> words, TextStyle base) {
+    final cached = _widthCache[page];
+    if (cached != null) return cached;
+    final style = base.copyWith(fontSize: _ref);
+    final out = <List<double>>[];
+    for (final line in lines) {
+      final row = <double>[];
+      if (line.isWords) {
+        for (var i = 0; i < line.length; i++) {
+          final tp = TextPainter(
+            text: TextSpan(style: style, children: _token(line, i, words, style)),
+            textDirection: TextDirection.rtl,
+            textScaler: TextScaler.noScaling,
+          )..layout();
+          row.add(tp.width);
+          tp.dispose();
+        }
+      }
+      out.add(row);
+    }
+    if (_widthCache.length > 60) _widthCache.clear();
+    return _widthCache[page] = out;
+  }
+
+  List<InlineSpan> _token(MushafLine line, int i, Map<int, List<List<InlineSpan>>> words, TextStyle style) {
+    final s = line.surahAt(i);
+    final a = line.ayahAt(i);
+    final w = line.wordAt(i);
+    if (w < 0) return [TextSpan(text: ayahMarker(a), style: TextStyle(color: palette.marker))];
+    final list = words[s * 1000 + a]!;
+    return w < list.length ? list[w] : const [];
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final base = TextStyle(fontFamily: Brand.quranFont, color: palette.ink, height: 1.55);
+    // Spans of every verse on the page, split into words.
+    final words = <int, List<List<InlineSpan>>>{};
+    for (final line in lines) {
+      for (var i = 0; i < line.length; i++) {
+        final key = line.surahAt(i) * 1000 + line.ayahAt(i);
+        words.putIfAbsent(
+          key,
+          () => wordSpanLists(
+            quran.text(line.surahAt(i), line.ayahAt(i)),
+            runs: tajweed?.runs(line.surahAt(i), line.ayahAt(i)) ?? const [],
+            classes: tajweed?.classes ?? const [],
+            colors: colors,
+          ),
+        );
+      }
+    }
+    final widths = _widths(words, base);
+    final opening = page <= 2;
+
+    return LayoutBuilder(builder: (context, box) {
+      final width = opening ? box.maxWidth * 0.84 : box.maxWidth;
+      // Largest size where every line fits its width with a small gap
+      // between words, and the line fits its slot.
+      // (the opening frame adds about 2 lines of padding)
+      var fs = opening ? (box.maxHeight - 12) / (lines.length * 2.2 + 2) : box.maxHeight / 15 / 1.62;
+      for (final row in widths) {
+        if (row.isEmpty) continue;
+        final natural = row.fold<double>(0, (a, b) => a + b) + _ref * 0.18 * (row.length - 1);
+        fs = math.min(fs, width / natural * _ref);
+      }
+      // The opening pages are set in a block in the middle of the page.
+      final slot = opening ? fs * 2.2 : box.maxHeight / 15;
+      final style = base.copyWith(fontSize: fs);
+      final gap = fs * 0.18;
+
+      Widget wordsLine(int li) {
+        final line = lines[li];
+        final natural = widths[li].fold<double>(0, (a, b) => a + b) * fs / _ref + gap * (line.length - 1);
+        // A short line (the end of a surah) is centred, as in print.
+        final justify = !opening && natural > width * 0.72;
+        final children = <Widget>[];
+        for (var i = 0; i < line.length; i++) {
+          final r = AyahRef(line.surahAt(i), line.ayahAt(i));
+          final w = line.wordAt(i);
+          if (!justify && i > 0) children.add(SizedBox(width: gap));
+          children.add(GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onAyahTap(r),
+            onLongPress: w < 0 ? null : () => showWordSheet(context, r, word: w),
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: highlighted.contains(r) ? palette.highlight : null, borderRadius: BorderRadius.circular(4)),
+              child: Text.rich(
+                TextSpan(children: _token(line, i, words, style)),
+                textDirection: TextDirection.rtl,
+                textScaler: TextScaler.noScaling,
+                maxLines: 1,
+                softWrap: false,
+                style: style,
+              ),
+            ),
+          ));
+        }
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(mainAxisAlignment: justify ? MainAxisAlignment.spaceBetween : MainAxisAlignment.center, children: children),
+        );
+      }
+
+      final block = SizedBox(
+          width: width,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (li, line) in lines.indexed)
+                SizedBox(
+                  height: slot,
+                  child: Center(
+                    child: switch (line) {
+                      _ when line.isHeader => _SurahBanner(info: quran.surah(line.surah!), size: math.min(fs, slot / 1.85), palette: palette),
+                      _ when line.basmala => Text(_basmala,
+                          textDirection: TextDirection.rtl, textScaler: TextScaler.noScaling, maxLines: 1, style: style),
+                      // Safety net: a line never overflows, it shrinks.
+                      _ => FittedBox(fit: BoxFit.scaleDown, child: SizedBox(width: width, child: wordsLine(li))),
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      if (!opening) return Center(child: block);
+      // The opening pages: the text in a decorated double frame.
+      return Center(
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: palette.marker, width: 2),
+          ),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: box.maxWidth * 0.04, vertical: fs * 0.8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: palette.marker.withValues(alpha: 0.5)),
+              gradient: RadialGradient(colors: [palette.marker.withValues(alpha: 0.07), palette.marker.withValues(alpha: 0.0)]),
+            ),
+            child: block,
+          ),
+        ),
+      );
+    });
+  }
+}
+
+/// The ornamental surah title inside a mushaf page, sized with the text.
+class _SurahBanner extends StatelessWidget {
+  const _SurahBanner({required this.info, required this.size, required this.palette});
+  final SurahInfo info;
+  final double size;
+  final ReadingPalette palette;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: _MushafPageState._bannerHeight(size),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size * 0.5),
+          border: Border.all(color: palette.marker.withValues(alpha: 0.8), width: 1.4),
+          gradient: LinearGradient(colors: [
+            palette.marker.withValues(alpha: 0.06),
+            palette.marker.withValues(alpha: 0.2),
+            palette.marker.withValues(alpha: 0.06),
+          ]),
+        ),
+        child: Text(
+          'سُورَةُ ${info.nameAr}',
+          textDirection: TextDirection.rtl,
+          textScaler: TextScaler.noScaling,
+          style: TextStyle(fontFamily: Brand.quranFont, fontSize: size * 0.9, height: 1.2, color: palette.ink),
+        ),
+      );
 }

@@ -64,6 +64,17 @@ that were considered and the brand guidelines.
 - **Mosque / TV mode**: a full-screen board with a large clock, today's times,
   a countdown to the next adhan and an iqama countdown. Keeps the screen on.
 
+### New in 1.5
+- **Reads like a printed mushaf**: the reader opens on pages laid out line
+  for line as the printed Madani mushaf (15 lines a page, the same words on
+  each line, the opening pages framed), white page and black text, with a
+  decorated frame, surah, juz and hizb in the header and the page number at
+  the foot. The page always fits the screen; swipe to turn. Tap a word for
+  the verse menu, long-press it for its meaning. Verse-by-verse reading and
+  the night and sepia pages stay one tap away in the reading settings.
+- The open tanween now shows correctly everywhere (it was drawn as a box or
+  as the wrong mark in 6,643 places).
+
 ### New in 1.3
 - **Colour-coded tajweed** in the reader (verse and page modes), computed for
   every verse with the open quran.ws tajweed engine; colour guide included.

@@ -13,7 +13,7 @@ String normalizeSpoken(String w, {bool daggerAsAlef = false}) {
       if (daggerAsAlef) b.writeCharCode(0x0627);
       continue;
     }
-    if ((c >= 0x0610 && c <= 0x061A) || (c >= 0x064B && c <= 0x065F) || (c >= 0x06D6 && c <= 0x06ED) || c == 0x0640) continue;
+    if ((c >= 0x0610 && c <= 0x061A) || (c >= 0x064B && c <= 0x065F) || (c >= 0x06D6 && c <= 0x06ED) || (c >= 0x08D3 && c <= 0x08FF) || c == 0x0640) continue;
     switch (c) {
       case 0x0671 || 0x0622 || 0x0623 || 0x0625:
         b.writeCharCode(0x0627); // ا

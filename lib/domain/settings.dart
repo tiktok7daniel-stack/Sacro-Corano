@@ -8,7 +8,7 @@ import '../core/theme/app_theme.dart';
 class AppSettings {
   const AppSettings({
     this.theme = AppThemeKind.night,
-    this.readingTheme = AppThemeKind.system,
+    this.readingTheme = AppThemeKind.light,
     this.lang = 'ar',
     this.highContrast = false,
     this.reduceMotion = false,
@@ -18,7 +18,7 @@ class AppSettings {
     this.showTranslation = false,
     this.tafsirId = 'muyassar',
     this.reciterId = 'alafasy',
-    this.pageMode = false,
+    this.pageMode = true,
     this.lat,
     this.lng,
     this.placeName,
