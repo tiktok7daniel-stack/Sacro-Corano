@@ -582,23 +582,29 @@ class _PageModeState extends ConsumerState<_PageMode> {
       textDirection: TextDirection.rtl,
       child: PageView.builder(
         controller: _pc,
+        // Keeps the next and previous pages laid out, so a turn never waits
+        // for a page to be measured.
+        allowImplicitScrolling: true,
+        physics: const _SmoothPagePhysics(),
         itemCount: QuranData.totalPages,
         onPageChanged: (i) => widget.onPageShown(i + 1),
-        itemBuilder: (context, i) => AnimatedBuilder(
-          animation: _pc,
-          builder: (context, child) {
-            if (reduced || !_pc.hasClients || !_pc.position.haveDimensions) return child!;
-            final delta = (_pc.page ?? i.toDouble()) - i;
-            return _PageTurn(delta: delta, child: child!);
-          },
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: widget.onToggleChrome,
-            child: MushafPage(
-              quran: widget.quran,
-              page: i + 1,
-              selected: widget.selected,
-              onAyahTap: widget.onAyahTap,
+        itemBuilder: (context, i) => RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _pc,
+            builder: (context, child) {
+              if (reduced || !_pc.hasClients || !_pc.position.haveDimensions) return child!;
+              final delta = (_pc.page ?? i.toDouble()) - i;
+              return _SoftTurn(delta: delta, child: child!);
+            },
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: widget.onToggleChrome,
+              child: MushafPage(
+                quran: widget.quran,
+                page: i + 1,
+                selected: widget.selected,
+                onAyahTap: widget.onAyahTap,
+              ),
             ),
           ),
         ),
@@ -607,10 +613,23 @@ class _PageModeState extends ConsumerState<_PageMode> {
   }
 }
 
-/// A light 3D page-turn: the leaving page folds around the spine and the
-/// incoming page brightens from the fold's shadow.
-class _PageTurn extends StatelessWidget {
-  const _PageTurn({required this.delta, required this.child});
+/// A calm settle: critically damped (no bounce past the page edge) and a
+/// little softer than the default, so a turn glides to rest.
+class _SmoothPagePhysics extends PageScrollPhysics {
+  const _SmoothPagePhysics({super.parent});
+
+  @override
+  _SmoothPagePhysics applyTo(ScrollPhysics? ancestor) => _SmoothPagePhysics(parent: buildParent(ancestor));
+
+  @override
+  SpringDescription get spring => SpringDescription.withDampingRatio(mass: 0.6, stiffness: 120, ratio: 1.0);
+}
+
+/// A gentle turn: the page being left eases back a touch (scale and a faint
+/// veil of the page's own colour, never a dark shadow), and the incoming
+/// page slides in flat. Nothing tilts or flashes, which is easy on the eyes.
+class _SoftTurn extends StatelessWidget {
+  const _SoftTurn({required this.delta, required this.child});
   final double delta;
   final Widget child;
 
@@ -618,29 +637,10 @@ class _PageTurn extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = delta.clamp(-1.0, 1.0);
     if (d.abs() < 0.001) return child;
-    final leaving = d > 0; // page index lower than the controller position
-    final angle = (leaving ? d : -d) * math.pi / 2.4;
-    final shade = (d.abs() * 0.45).clamp(0.0, 0.45);
-    return Transform(
-      // RTL book: the spine is on the right edge.
-      alignment: leaving ? Alignment.centerRight : Alignment.centerLeft,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.0012)
-        ..rotateY(leaving ? -angle : angle * 0.15),
-      child: Stack(fit: StackFit.passthrough, children: [
-        child,
-        IgnorePointer(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: leaving ? Alignment.centerRight : Alignment.centerLeft,
-                end: leaving ? Alignment.centerLeft : Alignment.centerRight,
-                colors: [Colors.black.withValues(alpha: shade), Colors.transparent],
-              ),
-            ),
-          ),
-        ),
-      ]),
+    final t = Curves.easeOut.transform(d.abs());
+    return Transform.scale(
+      scale: 1 - 0.035 * t,
+      child: Opacity(opacity: 1 - 0.18 * t, child: child),
     );
   }
 }

@@ -74,4 +74,30 @@ void main() {
     expect(find.text('٣'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('a half-way drag eases the leaving page and settles without bouncing', (tester) async {
+    await tester.runAsync(() async {
+      await env.dispose();
+      env = await createEnv(
+        settings: const AppSettings(lat: 21.42, lng: 39.82, haptics: false, reduceMotion: false, onboarded: true, autoLocation: false, pageMode: true),
+      );
+    });
+    await pumpScreen(tester, const ReaderScreen(surah: 2), env, overrides: overrides);
+    await tester.pump(const Duration(milliseconds: 600));
+    final gesture = await tester.startGesture(tester.getCenter(find.byType(PageView)));
+    for (var k = 0; k < 6; k++) {
+      await gesture.moveBy(const Offset(20, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    final ctl = tester.widget<PageView>(find.byType(PageView)).controller!;
+    expect(ctl.page! % 1, greaterThan(0.05), reason: 'the page follows the finger');
+    expect(find.byType(Opacity), findsWidgets, reason: 'the leaving page fades a little');
+    await gesture.moveBy(const Offset(120, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    final pc = tester.widget<PageView>(find.byType(PageView)).controller!;
+    expect(pc.page, closeTo(pc.page!.roundToDouble(), 0.0001), reason: 'rests exactly on a page');
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
