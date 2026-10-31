@@ -43,7 +43,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
   late AyahRef _anchor = AyahRef(widget.surah, widget.initialAyah);
   AyahRef? _selected;
   Timer? _readingTimer;
-  Timer? _hideChrome;
   bool _chrome = true;
 
   /// Bumped when the reader picks a surah, so the page view jumps to it.
@@ -54,13 +53,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _startTimer();
-    // Mushaf pages: the bars step aside after a moment so the page header
-    // shows; a tap on the page brings them back.
-    if (ref.read(settingsProvider).pageMode) {
-      _hideChrome = Timer(const Duration(milliseconds: 2500), () {
-        if (mounted && ref.read(settingsProvider).pageMode) setState(() => _chrome = false);
-      });
-    }
   }
 
   void _startTimer() {
@@ -77,7 +69,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _readingTimer?.cancel();
-    _hideChrome?.cancel();
     super.dispose();
   }
 
@@ -126,29 +117,42 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
       data: Theme.of(context).copyWith(extensions: [palette]),
       child: Scaffold(
         backgroundColor: palette.page,
+        // The body reads under the bar; Scaffold adds the bar's height to the
+        // top padding, so a mushaf page (SafeArea) starts just below it.
+        // Verse mode lets the bar slide away; on pages it stays put.
         extendBodyBehindAppBar: true,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: AnimatedSlide(
-            offset: _chrome ? Offset.zero : const Offset(0, -1.2),
+            offset: _chrome || pageMode ? Offset.zero : const Offset(0, -1.2),
             duration: m.medium,
             curve: Motion.emphasized,
             child: AppBar(
-              backgroundColor: palette.page.withValues(alpha: 0.94),
+              backgroundColor: pageMode ? mushafSurround(palette) : palette.page.withValues(alpha: 0.94),
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              elevation: 0,
               foregroundColor: palette.ink,
               title: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () => _pickSurah(q),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
+                  child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(mainAxisSize: MainAxisSize.min, children: [
-                      Text(info.nameAr, style: TextStyle(fontFamily: Brand.quranFont, fontSize: 22, color: palette.ink)),
-                      Icon(Icons.expand_more_rounded, color: palette.ink),
+                      Text(
+                        'سورة ${info.nameAr}',
+                        maxLines: 1,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(fontFamily: Brand.naskhFont, fontSize: 18, height: 1.25, fontWeight: FontWeight.w700, color: palette.ink),
+                      ),
+                      Icon(Icons.expand_more_rounded, color: palette.ink, size: 20),
                     ]),
                     Text(
                       '${context.tr('juz_n', {'n': q.juzOf(_anchor.surah, _anchor.ayah)})} · ${context.tr('page_n', {'n': q.pageOf(_anchor.surah, _anchor.ayah)})}',
-                      style: TextStyle(fontSize: 11, color: palette.ink.withValues(alpha: 0.6)),
+                      maxLines: 1,
+                      textScaler: TextScaler.noScaling,
+                      style: TextStyle(fontSize: 11, height: 1.3, color: palette.ink.withValues(alpha: 0.65)),
                     ),
                   ]),
                 ),
@@ -667,6 +671,10 @@ class _SoftTurn extends StatelessWidget {
   }
 }
 
+/// The colour around a mushaf page (and behind the reader's bar over it).
+Color mushafSurround(ReadingPalette p) =>
+    Color.alphaBlend(p.marker.withValues(alpha: p.page.computeLuminance() < 0.3 ? 0.06 : 0.12), p.page);
+
 /// One Madani page laid out like a printed mushaf: a framed page that
 /// always fits the screen (the text size is chosen so the whole page fits,
 /// never above the reader's own size), the surah and juz in the header,
@@ -815,7 +823,7 @@ class _MushafPageState extends ConsumerState<MushafPage> {
     final spineOnLeft = widget.page.isOdd;
 
     return ColoredBox(
-      color: Color.alphaBlend(frame.withValues(alpha: dark ? 0.06 : 0.12), p.page),
+      color: mushafSurround(p),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),

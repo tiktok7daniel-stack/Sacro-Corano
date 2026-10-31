@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mishkah/app/providers.dart';
 import 'package:mishkah/core/theme/app_theme.dart';
 import 'package:mishkah/data/quran/mushaf_layout.dart';
+import 'package:mishkah/domain/settings.dart';
 import 'package:mishkah/core/theme/brand.dart';
 import 'package:mishkah/core/widgets/common.dart';
 import 'package:mishkah/core/widgets/logo.dart';
@@ -111,4 +112,28 @@ void main() {
       await expectLater(find.byType(MushafPage), matchesGoldenFile('goldens/$name.png'));
     });
   }
+
+  testWidgets('reader on a mushaf page: the bar sits above the page', (tester) async {
+    await tester.runAsync(() => env.storage.writeSettings(const AppSettings(
+          lat: 21.42,
+          lng: 39.82,
+          haptics: false,
+          reduceMotion: true,
+          onboarded: true,
+          autoLocation: false,
+          pageMode: true,
+          readingTheme: AppThemeKind.light,
+        ).toJson()));
+    await pumpScreen(
+      tester,
+      const ReaderScreen(surah: 6),
+      env,
+      overrides: [mushafLayoutProvider.overrideWith((ref) async => MushafLayout.parse(File('assets/data/mushaf_lines.json.gz').readAsBytesSync()))],
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+    await expectLater(find.byType(ReaderScreen), matchesGoldenFile('goldens/reader_mushaf_page.png'));
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
