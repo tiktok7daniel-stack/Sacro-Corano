@@ -46,6 +46,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
   Timer? _hideChrome;
   bool _chrome = true;
 
+  /// Bumped when the reader picks a surah, so the page view jumps to it.
+  int _jumpToken = 0;
+
   @override
   void initState() {
     super.initState();
@@ -178,6 +181,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
                     key: const ValueKey('page'),
                     quran: q,
                     initialPage: q.pageOf(_anchor.surah, math.max(1, _anchor.ayah)),
+                    jumpToken: _jumpToken,
                     selected: _selected,
                     onAyahTap: _openActions,
                     onPageShown: (p) {
@@ -238,6 +242,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBinding
       setState(() {
         _surah = picked;
         _anchor = AyahRef(picked, 1);
+        _jumpToken++;
       });
     }
   }
@@ -539,10 +544,14 @@ class _PageMode extends ConsumerStatefulWidget {
     required this.onAyahTap,
     required this.onPageShown,
     required this.onToggleChrome,
+    this.jumpToken = 0,
   });
 
   final QuranData quran;
   final int initialPage;
+
+  /// A new value moves the view to [initialPage] (a surah was picked).
+  final int jumpToken;
   final AyahRef? selected;
   final void Function(AyahRef) onAyahTap;
   final void Function(int page) onPageShown;
@@ -559,6 +568,19 @@ class _PageModeState extends ConsumerState<_PageMode> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => widget.onPageShown(widget.initialPage));
+  }
+
+  @override
+  void didUpdateWidget(covariant _PageMode old) {
+    super.didUpdateWidget(old);
+    if (widget.jumpToken != old.jumpToken) {
+      // After this frame: the jump reports the new page, which saves the
+      // reading position, and that may not happen while building.
+      final target = widget.initialPage - 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _pc.hasClients) _pc.jumpToPage(target);
+      });
+    }
   }
 
   @override

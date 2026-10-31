@@ -100,4 +100,19 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('choosing another surah from the title jumps to its page', (tester) async {
+    await pumpScreen(tester, const ReaderScreen(surah: 112), env, overrides: overrides);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('٦٠٤'), findsWidgets);
+    await tester.tap(find.byIcon(Icons.expand_more_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('البقرة').last);
+    await tester.pumpAndSettle();
+    final pc = tester.widget<PageView>(find.byType(PageView)).controller!;
+    expect(pc.page!.round() + 1, 2, reason: 'Al-Baqarah starts on page 2');
+    expect(find.text('٢'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
