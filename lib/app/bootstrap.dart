@@ -22,7 +22,11 @@ abstract final class Bootstrap {
     if (!s.onboarded) {
       await showOnboarding(context, ref);
       if (!context.mounted) return;
-    } else if (s.autoLocation) {
+    } else {
+      await _askNotificationsOnce(ref);
+      if (!context.mounted) return;
+    }
+    if (s.onboarded && s.autoLocation) {
       try {
         await _travelCheck(context, ref);
       } catch (e) {
@@ -31,6 +35,20 @@ abstract final class Bootstrap {
       if (!context.mounted) return;
     }
     await reschedule(context, ref, onlyIfChanged: true);
+  }
+
+  /// Readers who skipped the permission at onboarding (or installed before
+  /// it was asked there) get one prompt, since the adhan needs it.
+  static Future<void> _askNotificationsOnce(WidgetRef ref) async {
+    final storage = ref.read(storageProvider);
+    final s = ref.read(settingsProvider);
+    if (storage.read<bool>('askedNotifications') == true || !s.adhanEnabled.values.any((v) => v)) return;
+    unawaited(storage.write('askedNotifications', true));
+    try {
+      await Notifications.instance.requestPermissions();
+    } catch (e) {
+      debugPrint('Permission request skipped: $e');
+    }
   }
 
   /// Travel mode: if the device moved more than 50 km from the saved place,
@@ -116,8 +134,13 @@ abstract final class Bootstrap {
         await Notifications.instance.scheduleReminders(s, morning: morning, evening: evening, wird: wird);
         await Notifications.instance.scheduleSmart(s, smart);
         await storage.write('scheduleSig', sig);
+        await storage.write('scheduleError', null);
       } catch (e) {
+        // Kept for the prayer screen, which tells the user instead of the
+        // adhan silently never coming.
         debugPrint('Scheduling failed: $e');
+        await storage.write('scheduleError', '$e');
+        await storage.write('scheduleSig', null);
       }
       try {
         await HomeWidgetSync.update(ref, s, lang);

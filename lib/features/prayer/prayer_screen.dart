@@ -123,6 +123,7 @@ class _PrayerScreenState extends ConsumerState<PrayerScreen> {
           ],
         ),
         const SizedBox(height: 12),
+        if (calc != null) const AdhanStatusCard(),
         if (calc == null) const PrayerCard(),
         if (next != null && nextAt != null)
           FadeSlideIn(
@@ -575,6 +576,107 @@ class PrayerSettingsScreen extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Whether the adhan can reach the reader, read from the system.
+final adhanHealthProvider = FutureProvider.autoDispose<(NotificationHealth, String?)>((ref) async {
+  final health = await Notifications.instance.health();
+  return (health, ref.read(storageProvider).read<String>('scheduleError'));
+});
+
+/// Tells the reader plainly whether the adhan will sound, and fixes what
+/// stops it: notifications off, exact alarms denied, nothing scheduled.
+class AdhanStatusCard extends ConsumerStatefulWidget {
+  const AdhanStatusCard({super.key});
+
+  @override
+  ConsumerState<AdhanStatusCard> createState() => _AdhanStatusCardState();
+}
+
+class _AdhanStatusCardState extends ConsumerState<AdhanStatusCard> with WidgetsBindingObserver {
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Back from the system settings: read the state again.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) ref.invalidate(adhanHealthProvider);
+  }
+
+  Future<void> _fix() async {
+    setState(() => _busy = true);
+    try {
+      await Notifications.instance.requestPermissions();
+      if (mounted) await Bootstrap.reschedule(context, ref);
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        ref.invalidate(adhanHealthProvider);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = ref.watch(settingsProvider);
+    final value = ref.watch(adhanHealthProvider).value;
+    if (value == null || !s.adhanEnabled.values.any((v) => v)) return const SizedBox.shrink();
+    final (h, error) = value;
+    final problems = <String>[
+      if (h.enabled == false) context.tr('adhan_problem_notifications'),
+      if (h.exact == false) context.tr('adhan_problem_exact'),
+      if (error != null) context.tr('adhan_problem_schedule'),
+      if (h.enabled != false && error == null && h.pendingAdhans == 0) context.tr('adhan_problem_none'),
+    ];
+    if (problems.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          const Icon(Icons.notifications_active_rounded, color: Brand.tealBright, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(context.tr('adhan_ok', {'n': h.pendingAdhans}), style: const TextStyle(color: Brand.tealBright, fontSize: 13))),
+          TextButton(
+            onPressed: () => Notifications.instance.testAdhan(s.adhanSound, context.tr('adhan_test_title'), context.tr('adhan_test_body')),
+            child: Text(context.tr('adhan_test_short')),
+          ),
+        ]),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        borderColor: Colors.orangeAccent,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.notifications_off_rounded, color: Colors.orangeAccent),
+            const SizedBox(width: 8),
+            Expanded(child: Text(context.tr('adhan_not_ready'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
+          ]),
+          const SizedBox(height: 6),
+          for (final p in problems) Text('• $p', style: const TextStyle(height: 1.6)),
+          const SizedBox(height: 4),
+          Text(context.tr('adhan_battery_tip'), style: const TextStyle(color: Brand.textMid, fontSize: 12, height: 1.5)),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: _busy ? null : _fix,
+            icon: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.build_rounded),
+            label: Text(context.tr('adhan_fix')),
+          ),
+        ]),
       ),
     );
   }

@@ -606,6 +606,16 @@ const _ar = <String, String>{
   'full_failed': 'تعذّر التحميل، تأكد من الإنترنت وحاول مرة أخرى.',
   'full_card': 'تلاوات كاملة لكبار القراء',
   'full_card_sub': 'مئات القراء: عبد الباسط والحصري والمنشاوي وغيرهم، سورة كاملة بملف واحد',
+  // Adhan status
+  'adhan_ok': 'الأذان مفعّل · {n} تنبيه مجدول',
+  'adhan_test_short': 'جرّب',
+  'adhan_not_ready': 'الأذان لن يعمل بعد',
+  'adhan_problem_notifications': 'الإشعارات مقفولة للتطبيق.',
+  'adhan_problem_exact': 'المنبّهات الدقيقة غير مسموحة، فقد يتأخر الأذان.',
+  'adhan_problem_schedule': 'تعذّرت جدولة الأذان على هذا الجهاز.',
+  'adhan_problem_none': 'لا توجد تنبيهات أذان مجدولة.',
+  'adhan_battery_tip': 'وإن لم يُسمع الأذان في وقته: إعدادات الهاتف ← التطبيقات ← مشكاة ← البطارية ← «غير مقيّد».',
+  'adhan_fix': 'إصلاح الآن',
 };
 
 const _en = <String, String>{
@@ -1195,4 +1205,14 @@ const _en = <String, String>{
   'full_failed': 'Download failed. Check your connection and try again.',
   'full_card': 'Full recitations by renowned reciters',
   'full_card_sub': 'Hundreds of reciters, each surah as one file',
+  // Adhan status
+  'adhan_ok': 'Adhan on · {n} alerts scheduled',
+  'adhan_test_short': 'Test',
+  'adhan_not_ready': 'The adhan will not sound yet',
+  'adhan_problem_notifications': 'Notifications are turned off for the app.',
+  'adhan_problem_exact': 'Exact alarms are not allowed, so the adhan may be late.',
+  'adhan_problem_schedule': 'The adhan could not be scheduled on this phone.',
+  'adhan_problem_none': 'No adhan alerts are scheduled.',
+  'adhan_battery_tip': 'If the adhan is still not heard on time: phone Settings → Apps → Mishkah → Battery → “Unrestricted”.',
+  'adhan_fix': 'Fix now',
 };

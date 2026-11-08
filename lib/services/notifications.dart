@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -7,6 +8,15 @@ import 'package:timezone/timezone.dart' as tz;
 import '../core/utils/hijri.dart';
 import '../domain/prayer_times.dart';
 import '../domain/settings.dart';
+
+/// What the prayer screen shows about the adhan's delivery.
+class NotificationHealth {
+  const NotificationHealth({this.enabled, this.exact, this.pendingAdhans = 0});
+  final bool? enabled;
+  final bool? exact;
+  final int pendingAdhans;
+  bool get ok => enabled != false && exact != false && pendingAdhans > 0;
+}
 
 /// Localised texts for the smart reminders, filled in by the caller.
 class SmartTexts {
@@ -97,19 +107,46 @@ class Notifications {
 
   Future<void> _init() async {
     if (_ready) return;
-    await _plugin.initialize(
-      settings: const InitializationSettings(android: AndroidInitializationSettings('ic_stat_mishkah')),
-    );
+    try {
+      await _plugin.initialize(
+        settings: const InitializationSettings(android: AndroidInitializationSettings('ic_stat_mishkah')),
+      );
+    } on PlatformException catch (e) {
+      // A missing small icon makes Android refuse every notification; the
+      // launcher icon is always there, so the adhan still sounds.
+      debugPrint('Notification icon unavailable ($e), using the launcher icon');
+      await _plugin.initialize(
+        settings: const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
+      );
+    }
     _ready = true;
   }
 
-  /// Asks for POST_NOTIFICATIONS (Android 13+) and exact alarms (Android 12+).
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+  /// Asks for POST_NOTIFICATIONS (Android 13+), and for exact alarms only
+  /// when they are not already allowed (that request opens a settings page).
   Future<bool> requestPermissions() async {
     await _init();
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    final granted = await android?.requestNotificationsPermission() ?? true;
-    await android?.requestExactAlarmsPermission();
+    final granted = await _android?.requestNotificationsPermission() ?? true;
+    if (await _android?.canScheduleExactNotifications() == false) {
+      await _android?.requestExactAlarmsPermission();
+    }
     return granted;
+  }
+
+  /// Whether notifications can reach the user, and how many prayer alerts
+  /// are waiting. Null fields mean the platform could not tell.
+  Future<NotificationHealth> health() async {
+    await _init();
+    final android = _android;
+    final pending = await _plugin.pendingNotificationRequests();
+    return NotificationHealth(
+      enabled: await android?.areNotificationsEnabled(),
+      exact: await android?.canScheduleExactNotifications(),
+      pendingAdhans: pending.where((r) => r.id >= _prayerIdBase && r.id < _reminderIdBase).length,
+    );
   }
 
   /// Cancels only the pending ids in [base, base + count): one query

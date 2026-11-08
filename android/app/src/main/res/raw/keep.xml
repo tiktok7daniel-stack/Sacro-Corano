@@ -1,3 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The adhan sounds are referenced only by name from notification channels. -->
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/mishkah_adhan_full,@raw/mishkah_adhan_short" />
+<!-- Referenced only by name from Dart (notification icon, adhan sounds), so
+     the release resource shrinker cannot see them: without this the icon was
+     removed and Android rejected every notification, adhan included. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_mishkah,@raw/mishkah_adhan_full,@raw/mishkah_adhan_short" />
